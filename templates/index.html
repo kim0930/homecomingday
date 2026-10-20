@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#0b1f3a">
-  <title>{{ event.year }} {{ event.title }} · 참석 회신</title>
-  <meta name="description" content="서울과학기술대학교 건축학부 건축공학전공 {{ event.year }} {{ event.title }} 안내와 참석 회신">
+  <title>{{ event.year }} {{ event.title }} · 사전 등록</title>
+  <meta name="description" content="서울과학기술대학교 건축학부 건축공학전공 {{ event.year }} {{ event.title }} 안내와 사전 등록">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
@@ -17,7 +17,7 @@
 <body>
   <div class="frame frame-tl" aria-hidden="true"></div>
   <div class="frame frame-br" aria-hidden="true"></div>
-  <a class="skip" href="#reply">참석 회신으로 이동</a>
+  <a class="skip" href="#reply">사전 등록으로 이동</a>
 
   <header class="topbar">
     <p class="brand">
@@ -46,7 +46,7 @@
       <p class="invite-title">{{ event.invite_title }}</p>
       <p class="lead">{{ event.invite_body }}</p>
       <p class="hero-cta">
-        <a class="button" href="#reply">참석 등록하기</a>
+        <a class="button" href="#reply">사전 등록하기</a>
       </p>
     </section>
 
@@ -144,12 +144,12 @@
     <section class="reply" id="reply" aria-labelledby="reply-title">
       <div class="reply-card">
         <div class="section-head">
-          <h2 id="reply-title">참석 회신</h2>
-          <p>참석하시는 분만 등록해 주세요. 연락처는 회신 확인에만 쓰입니다.</p>
+          <h2 id="reply-title">사전 등록</h2>
+          <p>참석하시는 분만 사전 등록해 주세요. 연락처는 등록 확인에만 쓰입니다.</p>
         </div>
 
-        <ul class="tally" aria-label="현재 회신 집계">
-          <li><strong>{{ stats.attend }}</strong><span>참석 등록</span></li>
+        <ul class="tally" aria-label="현재 사전 등록 집계">
+          <li><strong>{{ stats.attend }}</strong><span>사전 등록</span></li>
         </ul>
 
         {% if flash %}
@@ -220,7 +220,7 @@
             </label>
           </div>
           <p class="form-note">같은 연락처로 다시 보내면 응답이 수정됩니다.</p>
-          <button type="submit">참석 등록하기</button>
+          <button type="submit">사전 등록하기</button>
         </form>
       </div>
     </section>

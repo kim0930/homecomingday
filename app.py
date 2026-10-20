@@ -153,7 +153,7 @@ def create_app():
             return redirect(url_for("index") + "#reply")
 
         updated = save_rsvp(cleaned)
-        text = f"{cleaned['name']} 님, 참석으로 등록했습니다."
+        text = f"{cleaned['name']} 님, 사전 등록했습니다."
         if updated:
             text += " 같은 연락처의 이전 응답을 수정했습니다."
         else:
