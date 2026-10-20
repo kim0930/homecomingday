@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>회신 명단 · {{ event.title }}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body class="admin-body">
+  <main class="admin">
+    <header class="admin-head">
+      <div>
+        <p class="eyebrow">SeoulTech Architectural Engineering</p>
+        <h1>참석 회신 명단</h1>
+      </div>
+      <a class="text-link" href="{{ url_for('index') }}">안내 페이지</a>
+    </header>
+
+    {% if rows is none %}
+    <form class="login" method="post">
+      <label>
+        <span>관리 비밀번호</span>
+        <input type="password" name="password" required autofocus autocomplete="current-password">
+      </label>
+      {% if error %}<p class="banner warn" role="alert">{{ error }}</p>{% endif %}
+      <button type="submit">명단 보기</button>
+    </form>
+    {% else %}
+    <section class="admin-stats" aria-label="집계">
+      <p><strong>{{ stats.attend }}</strong> 참석</p>
+    </section>
+
+    {% if by_affiliation %}
+    <ul class="affil">
+      {% for row in by_affiliation %}
+      <li>{{ affiliations[row.affiliation] }} {{ row.people }}명</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    <div class="admin-actions">
+      <a class="button" href="{{ url_for('admin_export') }}">CSV 내려받기</a>
+      <form method="post" action="{{ url_for('admin_logout') }}">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <button type="submit" class="ghost">로그아웃</button>
+      </form>
+    </div>
+
+    {% if rows %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>이름</th>
+            <th>소속학과</th>
+            <th>학번·졸업연도</th>
+            <th>현직장</th>
+            <th>직책</th>
+            <th>연락처</th>
+            <th>메시지</th>
+            <th>수정</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td>{{ row.name }}</td>
+            <td>{{ affiliations[row.affiliation] }}</td>
+            <td>{{ row.detail or "—" }}</td>
+            <td>{{ row.workplace or "—" }}</td>
+            <td>{{ row.title or "—" }}</td>
+            <td>{{ row.phone_display }}</td>
+            <td>{{ row.message or "—" }}</td>
+            <td>{{ row.updated_at }}</td>
+            <td>
+              <form method="post" action="{{ url_for('admin_delete', row_id=row.id) }}" onsubmit="return confirm('이 회신을 삭제할까요?')">
+                <input type="hidden" name="csrf" value="{{ csrf }}">
+                <button type="submit" class="text-button">삭제</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="empty">아직 회신이 없습니다.</p>
+    {% endif %}
+    {% endif %}
+  </main>
+</body>
+</html>

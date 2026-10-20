@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0b1f3a">
+  <title>{{ event.year }} {{ event.title }} · 참석 회신</title>
+  <meta name="description" content="서울과학기술대학교 건축학부 건축공학전공 {{ event.year }} {{ event.title }} 안내와 참석 회신">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Noto+Serif+KR:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect fill='%230b1f3a' width='32' height='32'/%3E%3Cpath d='M6 22V10h8v12M16 22V14h10v8' fill='none' stroke='%23c4a35a' stroke-width='1.6'/%3E%3C/svg%3E">
+</head>
+<body>
+  <div class="frame frame-tl" aria-hidden="true"></div>
+  <div class="frame frame-br" aria-hidden="true"></div>
+  <a class="skip" href="#reply">참석 회신으로 이동</a>
+
+  <header class="topbar">
+    <p class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-text">
+        <strong>SEOULTECH</strong>
+        <span>건축학부 건축공학전공</span>
+      </span>
+    </p>
+    <p class="top-date">{{ event.date }} {{ event.time }}</p>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-visual" aria-hidden="true">
+        <svg class="blueprint" viewBox="0 0 320 220" fill="none">
+          <path d="M40 180 V70 H120 V180 M120 120 H210 V180 M210 90 H280 V180" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M55 95 H105 M55 115 H105 M55 135 H105 M55 155 H105" stroke="currentColor" stroke-width="0.8"/>
+          <path d="M140 140 H195 M140 155 H195 M230 115 H265 M230 135 H265 M230 155 H265" stroke="currentColor" stroke-width="0.8"/>
+          <path d="M20 190 H300" stroke="currentColor" stroke-width="1"/>
+        </svg>
+      </div>
+      <p class="year">{{ event.year }}년</p>
+      <h1>{{ event.title }}</h1>
+      <p class="invite-script">초대합니다</p>
+      <p class="invite-title">{{ event.invite_title }}</p>
+      <p class="lead">{{ event.invite_body }}</p>
+      <p class="hero-cta">
+        <a class="button" href="#reply">참석 등록하기</a>
+      </p>
+    </section>
+
+    <section class="panel" aria-label="행사 정보">
+      <div class="tabs" role="tablist" aria-label="안내 구분">
+        <button type="button" class="tab is-active" role="tab" id="tab-info" aria-controls="panel-info" aria-selected="true" data-tab="info">행사 안내</button>
+        <button type="button" class="tab" role="tab" id="tab-program" aria-controls="panel-program" aria-selected="false" data-tab="program" tabindex="-1">이날의 자리</button>
+      </div>
+
+      <div class="tab-panels">
+        <div class="tab-panel is-active" role="tabpanel" id="panel-info" aria-labelledby="tab-info">
+          <ul class="info-list">
+            <li>
+              <span class="info-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 3v4M16 3v4M4 10h16" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+              </span>
+              <div>
+                <p class="info-label">일시</p>
+                <p class="info-value">{{ event.date }} {{ event.time }}</p>
+              </div>
+            </li>
+            <li>
+              <span class="info-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 21s6-5.2 6-10a6 6 0 1 0-12 0c0 4.8 6 10 6 10z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="11" r="2.2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+              </span>
+              <div>
+                <p class="info-label">장소</p>
+                <p class="info-value">{{ event.campus }} {{ event.place }} <a href="{{ event.map_url }}" target="_blank" rel="noopener">지도</a></p>
+              </div>
+            </li>
+            <li>
+              <span class="info-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="9" r="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 18c.6-2.6 2.6-4 4.5-4s3.9 1.4 4.5 4M13 14.2c1.5-.4 3.1.2 4 1.8" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+              </span>
+              <div>
+                <p class="info-label">대상</p>
+                <p class="info-value">{{ event.audience }}</p>
+              </div>
+            </li>
+            <li>
+              <span class="info-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M7 4h10v16H7z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 8h4M10 12h4M10 16h3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+              </span>
+              <div>
+                <p class="info-label">후원</p>
+                <p class="info-value">{{ event.sponsors }}</p>
+              </div>
+            </li>
+            <li>
+              <span class="info-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 8h16v11H4z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 8V6a4 4 0 0 1 8 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+              </span>
+              <div>
+                <p class="info-label">식사 · 특전</p>
+                <p class="info-value">{{ event.meal }} · {{ event.benefit }}</p>
+              </div>
+            </li>
+            <li>
+              <span class="info-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 3l2.2 4.5 5 .7-3.6 3.5.9 5L12 14.8 7.5 16.7l.9-5L4.8 8.2l5-.7z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+              </span>
+              <div>
+                <p class="info-label">경품 · 문의</p>
+                <p class="info-value">{{ event.raffle }} · <a href="tel:029706551">{{ event.contact }}</a></p>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="tab-panel" role="tabpanel" id="panel-program" aria-labelledby="tab-program" hidden>
+          <p class="panel-note">{{ event.note }}</p>
+          <ol class="program-list">
+            {% for item in event.program %}
+            <li>
+              <span>{{ "%02d"|format(loop.index) }}</span>
+              <div>
+                <p>{{ item.title }}</p>
+                <p class="program-remark">{% if item.remark %}{{ item.remark }}{% else %}&nbsp;{% endif %}</p>
+              </div>
+            </li>
+            {% endfor %}
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <section class="reply" id="reply" aria-labelledby="reply-title">
+      <div class="reply-card">
+        <div class="section-head">
+          <h2 id="reply-title">참석 회신</h2>
+          <p>참석하시는 분만 등록해 주세요. 연락처는 회신 확인에만 쓰입니다.</p>
+        </div>
+
+        <ul class="tally" aria-label="현재 회신 집계">
+          <li><strong>{{ stats.attend }}</strong><span>참석 등록</span></li>
+        </ul>
+
+        {% if flash %}
+        <p class="banner ok" role="status">{{ flash.text }}</p>
+        {% endif %}
+        {% if errors %}
+        <div class="banner warn" role="alert">
+          {% for error in errors %}
+          <p>{{ error }}</p>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" action="{{ url_for('rsvp') }}" novalidate>
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <p class="honeypot" aria-hidden="true">
+            <label for="website">웹사이트</label>
+            <input id="website" name="website" tabindex="-1" autocomplete="off">
+          </p>
+
+          <div class="fields">
+            <label>
+              <span>이름</span>
+              <input name="name" required maxlength="40" autocomplete="name" value="{{ form.name }}" placeholder="홍길동">
+            </label>
+            <label>
+              <span>소속학과</span>
+              <select name="affiliation" required>
+                <option value="" {% if not form.affiliation %}selected{% endif %} disabled>선택</option>
+                {% for key, label in affiliations.items() %}
+                <option value="{{ key }}" {% if form.affiliation == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>
+              <span>학번 <em>선택</em></span>
+              <select name="student_year">
+                <option value="" {% if not form.student_year %}selected{% endif %}>해당 없음</option>
+                {% for key, label in student_years.items() %}
+                <option value="{{ key }}" {% if form.student_year == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>
+              <span>졸업연도 <em>선택</em></span>
+              <select name="grad_year">
+                <option value="" {% if not form.grad_year %}selected{% endif %}>해당 없음</option>
+                {% for key, label in grad_years.items() %}
+                <option value="{{ key }}" {% if form.grad_year == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>
+              <span>현직장 <em>선택</em></span>
+              <input name="workplace" maxlength="60" value="{{ form.workplace }}" placeholder="예: ○○건설, ○○엔지니어링">
+            </label>
+            <label>
+              <span>직책 <em>선택</em></span>
+              <input name="title" maxlength="40" value="{{ form.title }}" placeholder="예: 사원, 과장, 대표">
+            </label>
+            <label>
+              <span>연락처</span>
+              <input id="phone" name="phone" required inputmode="tel" autocomplete="tel" maxlength="13" value="{{ form.phone }}" placeholder="010-0000-0000">
+            </label>
+            <label class="wide">
+              <span>전하고 싶은 말 <em>선택</em></span>
+              <textarea name="message" maxlength="200" rows="3" placeholder="주차, 식사 관련 메모">{{ form.message }}</textarea>
+            </label>
+          </div>
+          <p class="form-note">같은 연락처로 다시 보내면 응답이 수정됩니다.</p>
+          <button type="submit">참석 등록하기</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="colophon">
+    <div class="colophon-photo" style="background-image:url('{{ url_for('static', filename='invite.jpg') }}')" aria-hidden="true"></div>
+    <div class="colophon-inner">
+      <p>{{ event.campus }} {{ event.host }}</p>
+      <p>{{ event.address }} · {{ event.contact }}</p>
+      <p><a href="{{ event.notice_url }}" target="_blank" rel="noopener">학과 공지 원문</a></p>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var tabs = Array.prototype.slice.call(document.querySelectorAll(".tab"));
+      var panels = {
+        info: document.getElementById("panel-info"),
+        program: document.getElementById("panel-program")
+      };
+
+      function activate(name, focusTab) {
+        tabs.forEach(function (tab) {
+          var on = tab.getAttribute("data-tab") === name;
+          tab.classList.toggle("is-active", on);
+          tab.setAttribute("aria-selected", on ? "true" : "false");
+          tab.tabIndex = on ? 0 : -1;
+          if (on && focusTab) tab.focus();
+        });
+        Object.keys(panels).forEach(function (key) {
+          var panel = panels[key];
+          var on = key === name;
+          panel.classList.toggle("is-active", on);
+          panel.hidden = !on;
+        });
+      }
+
+      tabs.forEach(function (tab, index) {
+        tab.addEventListener("click", function () {
+          activate(tab.getAttribute("data-tab"), false);
+        });
+        tab.addEventListener("keydown", function (event) {
+          var next = null;
+          if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+            event.preventDefault();
+            next = tabs[(index + (event.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+          } else if (event.key === "Home") {
+            event.preventDefault();
+            next = tabs[0];
+          } else if (event.key === "End") {
+            event.preventDefault();
+            next = tabs[tabs.length - 1];
+          }
+          if (next) activate(next.getAttribute("data-tab"), true);
+        });
+      });
+
+      var input = document.getElementById("phone");
+      if (!input) return;
+
+      function formatPhone(raw) {
+        var d = String(raw || "").replace(/\D/g, "").slice(0, 11);
+        if (!d) return "";
+        if (d.indexOf("02") === 0) {
+          if (d.length <= 2) return d;
+          if (d.length <= 5) return d.slice(0, 2) + "-" + d.slice(2);
+          if (d.length <= 9) return d.slice(0, 2) + "-" + d.slice(2, 5) + "-" + d.slice(5);
+          return d.slice(0, 2) + "-" + d.slice(2, 6) + "-" + d.slice(6, 10);
+        }
+        if (d.length <= 3) return d;
+        if (d.length <= 7) return d.slice(0, 3) + "-" + d.slice(3);
+        if (d.length <= 10) return d.slice(0, 3) + "-" + d.slice(3, 6) + "-" + d.slice(6);
+        return d.slice(0, 3) + "-" + d.slice(3, 7) + "-" + d.slice(7);
+      }
+
+      function applyFormat() {
+        var next = formatPhone(input.value);
+        if (input.value !== next) input.value = next;
+      }
+
+      input.addEventListener("input", applyFormat);
+      input.addEventListener("blur", applyFormat);
+      applyFormat();
+    })();
+  </script>
+</body>
+</html>
