@@ -124,7 +124,15 @@
               <span>{{ "%02d"|format(loop.index) }}</span>
               <div>
                 <p>{{ item.title }}</p>
-                <p class="program-remark">{% if item.remark %}{{ item.remark }}{% else %}&nbsp;{% endif %}</p>
+                {% if item.remark is string and item.remark %}
+                <p class="program-remark">{{ item.remark }}</p>
+                {% elif item.remark is iterable and item.remark is not string and item.remark %}
+                  {% for line in item.remark %}
+                <p class="program-remark">{{ line }}</p>
+                  {% endfor %}
+                {% else %}
+                <p class="program-remark">&nbsp;</p>
+                {% endif %}
               </div>
             </li>
             {% endfor %}

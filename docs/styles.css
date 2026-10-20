@@ -326,7 +326,7 @@ h1 {
   grid-template-columns: 42px 1fr;
   gap: 8px;
   align-items: start;
-  min-height: 76px;
+  min-height: 88px;
   height: 100%;
   padding: 14px 0;
   border-bottom: 1px solid var(--line);
@@ -360,11 +360,15 @@ h1 {
 .program-list li p { margin: 0; font-size: 15px; line-height: 1.4; }
 
 .program-remark {
-  margin-top: 4px !important;
+  margin-top: 2px !important;
   min-height: 1.35em;
   color: var(--muted);
   font-size: 13px !important;
   line-height: 1.35 !important;
+}
+
+.program-remark + .program-remark {
+  margin-top: 0 !important;
 }
 
 .section-head {
