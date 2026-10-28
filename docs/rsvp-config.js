@@ -5,5 +5,5 @@
  * 예: "https://script.google.com/macros/s/XXXX/exec"
  */
 window.RSVP_CONFIG = {
-  API_URL: "",
+  API_URL: "https://script.google.com/macros/s/AKfycby31K4JMQa4S1_Z_6xomXAQ-66oAq59k4AndzAsIOOnHXFcEGkQWIJ8gJngnowD_0Z7vw/exec",
 };
