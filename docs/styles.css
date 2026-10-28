@@ -428,6 +428,10 @@ h1 {
   font-size: 13px;
 }
 
+.tally-note {
+  margin: 0 0 18px;
+}
+
 .banner { margin: 0 0 16px; padding: 12px 14px; border-radius: 8px; }
 
 .banner p { margin: 0; }

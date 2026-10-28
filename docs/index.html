@@ -257,19 +257,10 @@
         </div>
 
         <ul class="tally" aria-label="현재 참석 집계">
-          <li><strong>0</strong><span>참석</span></li>
+          <li><strong id="attend-count">0</strong><span>참석</span></li>
         </ul>
 
-        
-        
-
-        <form method="post" action="https://formsubmit.co/hyeryeon@seoultech.ac.kr" novalidate>
-          
-          <input type="hidden" name="_subject" value="[건축공학인의 밤] 참석 회신">
-          <input type="hidden" name="_captcha" value="false">
-          <input type="hidden" name="_template" value="table">
-          <input type="hidden" name="_next" value="">
-
+        <form id="rsvp-form" method="post" action="#" novalidate>
           <p class="honeypot" aria-hidden="true">
             <label for="website">웹사이트</label>
             <input id="website" name="website" tabindex="-1" autocomplete="off">
@@ -614,86 +605,8 @@
       applyFormat();
     })();
   </script>
-
-  <script>
-    (function () {
-      var next = document.querySelector('input[name="_next"]');
-      if (next) next.value = location.href.split("#")[0] + "?submitted=1#reply";
-      var form = document.querySelector("form[action*='formsubmit']");
-      if (!form) return;
-      form.addEventListener("submit", function (event) {
-        var messages = [];
-        var consent = form.querySelector('[name="consent"]');
-        if (!consent || !consent.checked) messages.push("개인정보 수집·이용에 동의해 주세요.");
-        var att = form.querySelector('[name="attendance"]:checked');
-        if (!att) messages.push("참석 여부를 선택해 주세요.");
-        var syCheck = form.querySelector('[name="student_year"]');
-        if (!syCheck || !syCheck.value) messages.push("학번을 선택해 주세요.");
-        var warn = document.querySelector(".form-warn");
-        if (messages.length) {
-          event.preventDefault();
-          if (!warn) {
-            warn = document.createElement("div");
-            warn.className = "banner warn form-warn";
-            warn.setAttribute("role", "alert");
-            form.insertAdjacentElement("beforebegin", warn);
-          }
-          warn.textContent = "";
-          messages.forEach(function (text) {
-            var note = document.createElement("p");
-            note.textContent = text;
-            warn.appendChild(note);
-          });
-          return;
-        }
-        if (warn) warn.remove();
-        var aff = form.querySelector('[name="affiliation"]');
-        if (aff && aff.selectedOptions[0]) {
-          var hidden = document.createElement("input");
-          hidden.type = "hidden";
-          hidden.name = "소속학과";
-          hidden.value = aff.selectedOptions[0].textContent.trim();
-          form.appendChild(hidden);
-        }
-        var sy = form.querySelector('[name="student_year"]');
-        var gy = form.querySelector('[name="grad_year"]');
-        if (sy && sy.value) {
-          var h1 = document.createElement("input");
-          h1.type = "hidden"; h1.name = "학번"; h1.value = sy.selectedOptions[0].textContent.trim();
-          form.appendChild(h1);
-        }
-        if (gy && gy.value) {
-          var h2 = document.createElement("input");
-          h2.type = "hidden"; h2.name = "졸업연도"; h2.value = gy.selectedOptions[0].textContent.trim();
-          form.appendChild(h2);
-        }
-        var label = att.parentElement.querySelector("span");
-        var h3 = document.createElement("input");
-        h3.type = "hidden";
-        h3.name = "참석 여부";
-        h3.value = label ? label.textContent.trim() : att.value;
-        form.appendChild(h3);
-        var h4 = document.createElement("input");
-        h4.type = "hidden";
-        h4.name = "개인정보 수집 동의";
-        h4.value = "동의";
-        form.appendChild(h4);
-        try { sessionStorage.setItem("rsvp-attendance", h3.value); } catch (e) {}
-      });
-      if (location.search.indexOf("submitted=1") !== -1) {
-        var saved = "";
-        try { saved = sessionStorage.getItem("rsvp-attendance") || ""; } catch (e) {}
-        var box = document.createElement("p");
-        box.className = "banner ok";
-        box.setAttribute("role", "status");
-        box.textContent = saved
-          ? saved + "으로 회신했습니다. 확인해 주셔서 감사합니다."
-          : "회신을 접수했습니다. 확인해 주셔서 감사합니다.";
-        var card = document.querySelector(".reply-card .section-head");
-        if (card) card.insertAdjacentElement("afterend", box);
-      }
-    })();
-  </script>
+  <script src="rsvp-config.js"></script>
+  <script src="rsvp.js"></script>
 </body>
 
 </html>

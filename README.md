@@ -6,8 +6,28 @@
 
 공개 안내는 `docs/` 정적 사이트로 호스팅됩니다.
 
-- 사전 등록은 [FormSubmit](https://formsubmit.co)을 통해 학부 사무실 이메일로 전달됩니다.
-- 최초 1회 FormSubmit 확인 메일의 Activate 링크를 눌러야 접수가 시작됩니다.
+- 참석 회신·실시간 참석 인원 집계는 Google 스프레드시트 + Apps Script 웹 앱으로 처리합니다.
+- 회신 시 학부 사무실(`hyeryeon@seoultech.ac.kr`)로 알림 메일이 발송되고, 시트에 명단이 쌓입니다.
+- 같은 연락처로 다시 보내면 기존 행이 수정됩니다. 공개 화면에는 **참석** 인원만 표시합니다.
+
+### Apps Script 배포 (최초 1회)
+
+1. [새 Google 스프레드시트](https://sheets.google.com)를 만듭니다.
+2. **확장 프로그램 → Apps Script**에서 `docs/sheets-api/Code.gs` 내용을 붙여 넣고 저장합니다.
+3. `NOTIFY_EMAIL`이 학부 사무실 주소인지 확인합니다.
+4. **배포 → 새 배포 → 유형: 웹 앱**
+   - 실행 계정: **나**
+   - 액세스 권한: **모든 사용자**
+5. 배포된 웹 앱 URL을 복사해 `docs/rsvp-config.js`의 `API_URL`에 넣습니다.
+
+```js
+window.RSVP_CONFIG = {
+  API_URL: "https://script.google.com/macros/s/XXXX/exec",
+};
+```
+
+6. `docs/`를 GitHub Pages로 배포(또는 push)한 뒤, 페이지에서 참석 숫자가 갱신되는지 확인합니다.
+7. 코드를 수정하면 Apps Script에서 **새 버전으로 다시 배포**해야 반영됩니다.
 
 ## 로컬 Flask (명단·CSV 관리)
 
