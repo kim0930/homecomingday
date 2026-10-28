@@ -14,7 +14,7 @@
     <header class="admin-head">
       <div>
         <p class="eyebrow">SeoulTech Architectural Engineering</p>
-        <h1>사전 등록 명단</h1>
+        <h1>참석 회신 명단</h1>
       </div>
       <a class="text-link" href="{{ url_for('index') }}">안내 페이지</a>
     </header>
@@ -60,6 +60,8 @@
             <th>현직장</th>
             <th>직책</th>
             <th>연락처</th>
+            <th>이메일</th>
+            <th>참석 여부</th>
             <th>메시지</th>
             <th>수정</th>
             <th></th>
@@ -74,6 +76,8 @@
             <td>{{ row.workplace or "—" }}</td>
             <td>{{ row.title or "—" }}</td>
             <td>{{ row.phone_display }}</td>
+            <td>{{ row.email or "—" }}</td>
+            <td>{{ attendance_labels.get(row.attendance, row.attendance) }}</td>
             <td>{{ row.message or "—" }}</td>
             <td>{{ row.updated_at }}</td>
             <td>

@@ -45,6 +45,7 @@ AFFILIATIONS = {
 }
 ATTENDANCE = {
     "attend": "참석",
+    "decline": "불참",
 }
 STUDENT_YEARS = {f"{y % 100:02d}": f"{y % 100:02d}학번" for y in range(2026, 1979, -1)}
 GRAD_YEARS = {str(y): f"{y}년 졸업" for y in range(2026, 1989, -1)}
@@ -65,7 +66,7 @@ EVENT = {
         "바쁘시더라도 참석하셔서 자리를 빛내주시길 부탁드립니다."
     ),
     "audience": "건축공학전공, 건축기계설비공학과, 스마트시티공학과 재학생·동문·교직원",
-    "sponsors": "건축기계설비공학과, 스마트시티공학과, 계룡건설",
+    "sponsors": "건축기계설비공학과, 스마트시티공학과, 계룡건설, 태영건설, 아이티엠건축사사무소",
     "meal": "뷔페",
     "benefit": "현장에 참여한 학생에게 EPiC 점수 100점",
     "raffle": "에어팟, 스피커, 쿠폰 등",
@@ -153,7 +154,8 @@ def create_app():
             return redirect(url_for("index") + "#reply")
 
         updated = save_rsvp(cleaned)
-        text = f"{cleaned['name']} 님, 사전 등록했습니다."
+        status = ATTENDANCE[cleaned["attendance"]]
+        text = f"{cleaned['name']} 님, {status}으로 회신했습니다."
         if updated:
             text += " 같은 연락처의 이전 응답을 수정했습니다."
         else:
@@ -200,7 +202,7 @@ def create_app():
             return redirect(url_for("admin"))
         buffer = StringIO()
         writer = csv.writer(buffer)
-        writer.writerow(["이름", "소속학과", "학번·졸업연도", "현직장", "직책", "연락처", "메시지", "최초 회신", "수정"])
+        writer.writerow(["이름", "소속학과", "학번·졸업연도", "현직장", "직책", "연락처", "이메일", "참석 여부", "메시지", "최초 회신", "수정"])
         for row in list_rsvps():
             writer.writerow([
                 row["name"],
@@ -209,6 +211,8 @@ def create_app():
                 row["workplace"],
                 row["title"],
                 row["phone_display"],
+                row["email"],
+                ATTENDANCE.get(row["attendance"], row["attendance"]),
                 row["message"],
                 row["created_at"],
                 row["updated_at"],
@@ -265,6 +269,7 @@ def init_db():
                 workplace TEXT NOT NULL DEFAULT '',
                 title TEXT NOT NULL DEFAULT '',
                 phone TEXT NOT NULL UNIQUE,
+                email TEXT NOT NULL DEFAULT '',
                 attendance TEXT NOT NULL,
                 guests INTEGER NOT NULL DEFAULT 0,
                 message TEXT NOT NULL DEFAULT '',
@@ -278,6 +283,8 @@ def init_db():
             conn.execute("ALTER TABLE rsvps ADD COLUMN workplace TEXT NOT NULL DEFAULT ''")
         if "title" not in existing:
             conn.execute("ALTER TABLE rsvps ADD COLUMN title TEXT NOT NULL DEFAULT ''")
+        if "email" not in existing:
+            conn.execute("ALTER TABLE rsvps ADD COLUMN email TEXT NOT NULL DEFAULT ''")
 
 
 def now_kst():
@@ -293,6 +300,9 @@ def empty_form():
         "workplace": "",
         "title": "",
         "phone": "",
+        "email": "",
+        "attendance": "",
+        "consent": "",
         "message": "",
     }
 
@@ -330,13 +340,15 @@ def format_phone(digits):
 def validate_rsvp(source):
     form = form_from(source)
     errors = []
+    if form["consent"] != "yes":
+        errors.append("개인정보 수집·이용에 동의해 주세요.")
     name = re.sub(r"\s+", " ", form["name"]).strip()
     if not name or len(name) > 40 or not re.search(r"[가-힣A-Za-z]", name):
         errors.append("이름을 입력해 주세요.")
     if form["affiliation"] not in AFFILIATIONS:
         errors.append("소속학과를 선택해 주세요.")
-    if form["student_year"] and form["student_year"] not in STUDENT_YEARS:
-        errors.append("학번을 목록에서 선택해 주세요.")
+    if form["student_year"] not in STUDENT_YEARS:
+        errors.append("학번을 선택해 주세요.")
     if form["grad_year"] and form["grad_year"] not in GRAD_YEARS:
         errors.append("졸업연도를 목록에서 선택해 주세요.")
     workplace = re.sub(r"\s+", " ", form["workplace"]).strip()
@@ -348,6 +360,13 @@ def validate_rsvp(source):
     phone_digits = digits_only(form["phone"])
     if not re.fullmatch(r"0\d{8,10}", phone_digits):
         errors.append("연락처를 숫자로 입력해 주세요.")
+    email = form["email"].lower()
+    if not email or len(email) > 80 or not re.fullmatch(
+        r"[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}", email
+    ):
+        errors.append("이메일 주소를 올바르게 입력해 주세요.")
+    if form["attendance"] not in ATTENDANCE:
+        errors.append("참석 여부를 선택해 주세요.")
     message = form["message"]
     if len(message) > 200:
         errors.append("메시지는 200자 안으로 입력해 주세요.")
@@ -360,7 +379,8 @@ def validate_rsvp(source):
         "title": title,
         "phone": format_phone(phone_digits),
         "phone_key": phone_digits,
-        "attendance": "attend",
+        "email": email,
+        "attendance": form["attendance"],
         "guests": 0,
         "message": message,
     }
@@ -379,7 +399,7 @@ def save_rsvp(cleaned):
                 """
                 UPDATE rsvps
                 SET name = ?, affiliation = ?, detail = ?, workplace = ?, title = ?,
-                    attendance = ?, guests = ?, message = ?, updated_at = ?
+                    email = ?, attendance = ?, guests = ?, message = ?, updated_at = ?
                 WHERE phone = ?
                 """,
                 (
@@ -388,6 +408,7 @@ def save_rsvp(cleaned):
                     cleaned["detail"],
                     cleaned["workplace"],
                     cleaned["title"],
+                    cleaned["email"],
                     cleaned["attendance"],
                     cleaned["guests"],
                     cleaned["message"],
@@ -399,8 +420,8 @@ def save_rsvp(cleaned):
         conn.execute(
             """
             INSERT INTO rsvps
-                (name, affiliation, detail, workplace, title, phone, attendance, guests, message, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (name, affiliation, detail, workplace, title, phone, email, attendance, guests, message, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 cleaned["name"],
@@ -409,6 +430,7 @@ def save_rsvp(cleaned):
                 cleaned["workplace"],
                 cleaned["title"],
                 cleaned["phone_key"],
+                cleaned["email"],
                 cleaned["attendance"],
                 cleaned["guests"],
                 cleaned["message"],
@@ -434,13 +456,17 @@ def list_rsvps():
 
 def attendance_stats():
     with connect() as conn:
-        attend = conn.execute(
-            "SELECT COUNT(*) FROM rsvps WHERE attendance = 'attend'"
-        ).fetchone()[0]
+        rows = conn.execute(
+            "SELECT attendance, COUNT(*) FROM rsvps GROUP BY attendance"
+        ).fetchall()
+    counts = {row[0]: row[1] for row in rows}
+    attend = counts.get("attend", 0)
+    decline = counts.get("decline", 0)
     return {
         "attend": attend,
+        "decline": decline,
         "headcount": attend,
-        "total": attend,
+        "total": attend + decline,
     }
 
 

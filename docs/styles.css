@@ -110,14 +110,11 @@ main,
 }
 
 .brand-mark {
-  width: 34px;
-  height: 34px;
-  background:
-    linear-gradient(#c8102e 0 50%, transparent 50%),
-    linear-gradient(90deg, #c8102e 0 50%, #8a9199 50%);
-  background-size: 100% 100%, 100% 50%;
-  background-position: 0 0, 0 100%;
-  background-repeat: no-repeat;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  display: block;
+  object-fit: contain;
 }
 
 .brand-text {
@@ -456,6 +453,33 @@ h1 {
   overflow: hidden;
 }
 
+.consent {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 10px;
+  align-items: start;
+  margin: 0 0 18px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper-2);
+}
+
+.consent input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  padding: 0;
+  accent-color: var(--navy);
+}
+
+.consent span {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 450;
+  line-height: 1.55;
+}
+
 .fields {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -487,6 +511,54 @@ legend {
 }
 
 .wide { grid-column: 1 / -1; }
+
+.attendance {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.choice { position: relative; }
+
+.choice input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+
+.fields .choice span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--navy);
+  font-size: 15px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.fields .choice input:checked + span {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #fff;
+}
+
+.choice input:focus-visible + span {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
 
 input,
 select,
@@ -653,7 +725,7 @@ th, td {
   white-space: nowrap;
 }
 
-td:nth-child(7) { white-space: normal; min-width: 160px; }
+td:nth-child(9) { white-space: normal; min-width: 160px; }
 
 .text-button {
   margin: 0;

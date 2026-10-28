@@ -5,23 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#0b1f3a">
-  <title>{{ event.year }} {{ event.title }} · 사전 등록</title>
+  <title>{{ event.year }} {{ event.title }} · 참석 회신</title>
   <meta name="description" content="서울과학기술대학교 건축학부 건축공학전공 {{ event.year }} {{ event.title }} 안내와 사전 등록">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Noto+Serif+KR:wght@500;600;700&display=swap">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect fill='%230b1f3a' width='32' height='32'/%3E%3Cpath d='M6 22V10h8v12M16 22V14h10v8' fill='none' stroke='%23c4a35a' stroke-width='1.6'/%3E%3C/svg%3E">
+  <link rel="icon" href="{{ url_for('static', filename='seoultech-logo.png') }}" type="image/png">
 </head>
 <body>
   <div class="frame frame-tl" aria-hidden="true"></div>
   <div class="frame frame-br" aria-hidden="true"></div>
-  <a class="skip" href="#reply">사전 등록으로 이동</a>
+  <a class="skip" href="#reply">참석 회신으로 이동</a>
 
   <header class="topbar">
     <p class="brand">
-      <span class="brand-mark" aria-hidden="true"></span>
+      <img class="brand-mark" src="{{ url_for('static', filename='seoultech-logo.png') }}" alt="서울과학기술대학교" width="48" height="48">
       <span class="brand-text">
         <strong>SEOULTECH</strong>
         <span>건축학부 건축공학전공</span>
@@ -46,7 +46,7 @@
       <p class="invite-title">{{ event.invite_title }}</p>
       <p class="lead">{{ event.invite_body }}</p>
       <p class="hero-cta">
-        <a class="button" href="#reply">사전 등록하기</a>
+        <a class="button" href="#reply">참석 회신하기</a>
       </p>
     </section>
 
@@ -144,12 +144,12 @@
     <section class="reply" id="reply" aria-labelledby="reply-title">
       <div class="reply-card">
         <div class="section-head">
-          <h2 id="reply-title">사전 등록</h2>
-          <p>참석하시는 분만 사전 등록해 주세요. 연락처는 등록 확인에만 쓰입니다.</p>
+          <h2 id="reply-title">참석 회신</h2>
+          <p>참석 여부를 선택한 뒤 보내 주세요.</p>
         </div>
 
-        <ul class="tally" aria-label="현재 사전 등록 집계">
-          <li><strong>{{ stats.attend }}</strong><span>사전 등록</span></li>
+        <ul class="tally" aria-label="현재 참석 집계">
+          <li><strong>{{ stats.attend }}</strong><span>참석</span></li>
         </ul>
 
         {% if flash %}
@@ -170,7 +170,23 @@
             <input id="website" name="website" tabindex="-1" autocomplete="off">
           </p>
 
+          <label class="consent">
+            <input type="checkbox" name="consent" value="yes" {% if form.consent == "yes" %}checked{% endif %} required>
+            <span>개인정보 수집·이용에 동의합니다. 수집한 이름, 소속, 연락처, 이메일 등은 이번 행사 운영과 향후 학교 행사 안내에 활용됩니다.</span>
+          </label>
+
           <div class="fields">
+            <fieldset class="wide attendance">
+              <legend>참석 여부</legend>
+              <div class="choices">
+                {% for key, label in attendance_labels.items() %}
+                <label class="choice">
+                  <input type="radio" name="attendance" value="{{ key }}" {% if form.attendance == key %}checked{% endif %} {% if loop.first %}required{% endif %}>
+                  <span>{{ label }}</span>
+                </label>
+                {% endfor %}
+              </div>
+            </fieldset>
             <label>
               <span>이름</span>
               <input name="name" required maxlength="40" autocomplete="name" value="{{ form.name }}" placeholder="홍길동">
@@ -185,9 +201,9 @@
               </select>
             </label>
             <label>
-              <span>학번 <em>선택</em></span>
-              <select name="student_year">
-                <option value="" {% if not form.student_year %}selected{% endif %}>해당 없음</option>
+              <span>학번</span>
+              <select name="student_year" required>
+                <option value="" {% if not form.student_year %}selected{% endif %} disabled>선택</option>
                 {% for key, label in student_years.items() %}
                 <option value="{{ key }}" {% if form.student_year == key %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
@@ -214,13 +230,17 @@
               <span>연락처</span>
               <input id="phone" name="phone" required inputmode="tel" autocomplete="tel" maxlength="13" value="{{ form.phone }}" placeholder="010-0000-0000">
             </label>
+            <label>
+              <span>이메일</span>
+              <input name="email" type="email" required maxlength="80" autocomplete="email" inputmode="email" value="{{ form.email }}" placeholder="name@example.com">
+            </label>
             <label class="wide">
               <span>전하고 싶은 말 <em>선택</em></span>
               <textarea name="message" maxlength="200" rows="3" placeholder="주차, 식사 관련 메모">{{ form.message }}</textarea>
             </label>
           </div>
           <p class="form-note">같은 연락처로 다시 보내면 응답이 수정됩니다.</p>
-          <button type="submit">사전 등록하기</button>
+          <button type="submit">회신하기</button>
         </form>
       </div>
     </section>
