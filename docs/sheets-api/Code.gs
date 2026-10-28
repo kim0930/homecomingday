@@ -4,14 +4,15 @@
  * 설정:
  * 1. 새 Google 스프레드시트를 만듭니다.
  * 2. 확장 프로그램 → Apps Script 에서 이 파일을 붙여 넣습니다.
- * 3. NOTIFY_EMAIL 을 학부 사무실 주소로 확인합니다.
+ * 3. 알림 메일이 필요하면 NOTIFY_EMAIL 에 주소를 넣습니다. (기본값은 비활성)
  * 4. 배포 → 새 배포 → 유형: 웹 앱
  *    - 실행 계정: 나
  *    - 액세스 권한: 모든 사용자
  * 5. 배포된 웹 앱 URL 을 docs/rsvp-config.js 의 API_URL 에 넣습니다.
  */
 
-var NOTIFY_EMAIL = "hyeryeon@seoultech.ac.kr";
+// 알림 메일을 끄려면 빈 문자열로 두세요. (회신 데이터는 시트에만 저장됩니다.)
+var NOTIFY_EMAIL = "";
 var SHEET_NAME = "RSVPs";
 
 var AFFILIATIONS = {
