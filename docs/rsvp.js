@@ -3,6 +3,7 @@
   var apiUrl = (config.API_URL || "").trim();
   var form = document.getElementById("rsvp-form");
   var tallyEl = document.getElementById("tally");
+  var yearsEl = document.getElementById("tally-years");
   var attendEl = document.getElementById("attend-count");
   var sectionHead = document.querySelector(".reply-card .section-head");
 
@@ -47,9 +48,8 @@
     return 2000 + value;
   }
 
-  function makeItem(count, label, isTotal) {
+  function makeYearItem(count, label) {
     var li = document.createElement("li");
-    if (isTotal) li.className = "tally-total";
     var strong = document.createElement("strong");
     strong.textContent = String(count == null ? 0 : count);
     var span = document.createElement("span");
@@ -67,21 +67,17 @@
     });
     var other = stats && typeof stats.other === "number" ? stats.other : 0;
 
-    tallyEl.innerHTML = "";
-    var totalItem = makeItem(attend, "전체 참석", true);
-    totalItem.querySelector("strong").id = "attend-count";
-    tallyEl.appendChild(totalItem);
+    if (attendEl) attendEl.textContent = String(attend);
+    if (!yearsEl) return;
 
+    yearsEl.innerHTML = "";
     byYear.forEach(function (row) {
       if (!row || !row.people) return;
-      tallyEl.appendChild(makeItem(row.people, row.label || (row.year + "학번"), false));
+      yearsEl.appendChild(makeYearItem(row.people, row.label || (row.year + "학번")));
     });
-
     if (other > 0) {
-      tallyEl.appendChild(makeItem(other, "기타", false));
+      yearsEl.appendChild(makeYearItem(other, "기타"));
     }
-
-    attendEl = document.getElementById("attend-count");
   }
 
   function selectedLabel(select) {

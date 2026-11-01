@@ -256,9 +256,13 @@
           <p>참석 여부를 선택한 뒤 보내 주세요.</p>
         </div>
 
-        <ul class="tally" id="tally" aria-label="현재 참석 집계">
-          <li><strong id="attend-count">0</strong><span>전체 참석</span></li>
-        </ul>
+        <div class="tally-board" id="tally" aria-label="현재 참석 집계">
+          <div class="tally-total">
+            <strong id="attend-count">0</strong>
+            <span>전체 참석</span>
+          </div>
+          <ul class="tally-years" id="tally-years"></ul>
+        </div>
 
         <form id="rsvp-form" method="post" action="#" novalidate>
           <p class="honeypot" aria-hidden="true">

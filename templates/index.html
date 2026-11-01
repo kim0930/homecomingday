@@ -148,15 +148,20 @@
           <p>참석 여부를 선택한 뒤 보내 주세요.</p>
         </div>
 
-        <ul class="tally" aria-label="현재 참석 집계">
-          <li class="tally-total"><strong>{{ stats.attend }}</strong><span>전체 참석</span></li>
-          {% for row in stats.by_year %}
-          <li><strong>{{ row.people }}</strong><span>{{ row.label }}</span></li>
-          {% endfor %}
-          {% if stats.other %}
-          <li><strong>{{ stats.other }}</strong><span>기타</span></li>
-          {% endif %}
-        </ul>
+        <div class="tally-board" aria-label="현재 참석 집계">
+          <div class="tally-total">
+            <strong>{{ stats.attend }}</strong>
+            <span>전체 참석</span>
+          </div>
+          <ul class="tally-years">
+            {% for row in stats.by_year %}
+            <li><strong>{{ row.people }}</strong><span>{{ row.label }}</span></li>
+            {% endfor %}
+            {% if stats.other %}
+            <li><strong>{{ stats.other }}</strong><span>기타</span></li>
+            {% endif %}
+          </ul>
+        </div>
 
         {% if flash %}
         <p class="banner ok" role="status">{{ flash.text }}</p>
