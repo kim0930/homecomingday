@@ -474,13 +474,32 @@ def cohort_sort_key(year):
     return 2000 + value
 
 
+DEPT_KEYS = {
+    "ae_student": "ae",
+    "ae_alumni": "ae",
+    "me_student": "me",
+    "me_alumni": "me",
+    "sc_student": "sc",
+    "sc_alumni": "sc",
+}
+STATUS_KEYS = {
+    "ae_student": "student",
+    "me_student": "student",
+    "sc_student": "student",
+    "ae_alumni": "alumni",
+    "me_alumni": "alumni",
+    "sc_alumni": "alumni",
+    "alumni": "alumni",
+}
+
+
 def attendance_stats():
     with connect() as conn:
         rows = conn.execute(
             "SELECT attendance, COUNT(*) FROM rsvps GROUP BY attendance"
         ).fetchall()
         details = conn.execute(
-            "SELECT detail FROM rsvps WHERE attendance = 'attend'"
+            "SELECT detail, affiliation FROM rsvps WHERE attendance = 'attend'"
         ).fetchall()
     counts = {row[0]: row[1] for row in rows}
     attend = counts.get("attend", 0)
@@ -488,12 +507,18 @@ def attendance_stats():
 
     year_counts = {}
     other = 0
-    for (detail,) in details:
+    dept_counts = {"ae": 0, "me": 0, "sc": 0, "other": 0}
+    status_counts = {"student": 0, "alumni": 0, "other": 0}
+    for detail, affiliation in details:
         year = parse_student_year(detail)
         if year:
             year_counts[year] = year_counts.get(year, 0) + 1
         else:
             other += 1
+        dept = DEPT_KEYS.get(affiliation, "other")
+        dept_counts[dept] = dept_counts.get(dept, 0) + 1
+        status = STATUS_KEYS.get(affiliation, "other")
+        status_counts[status] = status_counts.get(status, 0) + 1
 
     by_year = [
         {
@@ -503,6 +528,17 @@ def attendance_stats():
         }
         for year in sorted(year_counts, key=cohort_sort_key)
     ]
+    by_dept = [
+        {"key": "ae", "label": "건축공학전공", "people": dept_counts["ae"]},
+        {"key": "me", "label": "건축기계설비공학과", "people": dept_counts["me"]},
+        {"key": "sc", "label": "스마트시티공학과", "people": dept_counts["sc"]},
+        {"key": "other", "label": "기타", "people": dept_counts["other"]},
+    ]
+    by_status = [
+        {"key": "student", "label": "재학생", "people": status_counts["student"]},
+        {"key": "alumni", "label": "졸업생", "people": status_counts["alumni"]},
+        {"key": "other", "label": "기타", "people": status_counts["other"]},
+    ]
     return {
         "attend": attend,
         "decline": decline,
@@ -510,6 +546,8 @@ def attendance_stats():
         "total": attend + decline,
         "by_year": by_year,
         "other": other,
+        "by_dept": by_dept,
+        "by_status": by_status,
     }
 
 

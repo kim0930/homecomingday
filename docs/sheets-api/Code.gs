@@ -344,6 +344,21 @@ function listRsvps_() {
   return rows;
 }
 
+function deptKey_(label) {
+  var text = String(label || "");
+  if (text.indexOf("건축공학전공") >= 0) return "ae";
+  if (text.indexOf("건축기계설비") >= 0) return "me";
+  if (text.indexOf("스마트시티") >= 0) return "sc";
+  return "other";
+}
+
+function statusKey_(label) {
+  var text = String(label || "");
+  if (text.indexOf("재학생") >= 0) return "student";
+  if (text.indexOf("졸업생") >= 0 || text.indexOf("동문") >= 0) return "alumni";
+  return "other";
+}
+
 function stats_() {
   var sheet = sheet_();
   var values = sheet.getDataRange().getValues();
@@ -351,6 +366,8 @@ function stats_() {
   var decline = 0;
   var yearCounts = {};
   var other = 0;
+  var deptCounts = { ae: 0, me: 0, sc: 0, other: 0 };
+  var statusCounts = { student: 0, alumni: 0, other: 0 };
   for (var i = 1; i < values.length; i++) {
     var key = String(values[i][13] || "");
     if (key === "attend") {
@@ -363,6 +380,11 @@ function stats_() {
       } else {
         other++;
       }
+      var affiliation = String(values[i][2] || "");
+      var dept = deptKey_(affiliation);
+      deptCounts[dept] = (deptCounts[dept] || 0) + 1;
+      var status = statusKey_(affiliation);
+      statusCounts[status] = (statusCounts[status] || 0) + 1;
     } else if (key === "decline") {
       decline++;
     }
@@ -378,12 +400,25 @@ function stats_() {
         people: yearCounts[year],
       };
     });
+  var byDept = [
+    { key: "ae", label: "건축공학전공", people: deptCounts.ae },
+    { key: "me", label: "건축기계설비공학과", people: deptCounts.me },
+    { key: "sc", label: "스마트시티공학과", people: deptCounts.sc },
+    { key: "other", label: "기타", people: deptCounts.other },
+  ];
+  var byStatus = [
+    { key: "student", label: "재학생", people: statusCounts.student },
+    { key: "alumni", label: "졸업생", people: statusCounts.alumni },
+    { key: "other", label: "기타", people: statusCounts.other },
+  ];
   return {
     attend: attend,
     decline: decline,
     total: attend + decline,
     by_year: byYear,
     other: other,
+    by_dept: byDept,
+    by_status: byStatus,
   };
 }
 

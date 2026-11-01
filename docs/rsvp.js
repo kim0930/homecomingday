@@ -48,6 +48,9 @@
     return 2000 + value;
   }
 
+  var latestStats = null;
+  var activeTally = "year";
+
   function makeYearItem(count, label) {
     var li = document.createElement("li");
     var strong = document.createElement("strong");
@@ -59,25 +62,58 @@
     return li;
   }
 
+  function renderBreakdown(stats, mode) {
+    if (!yearsEl) return;
+    yearsEl.innerHTML = "";
+    var rows = [];
+    if (mode === "dept") {
+      rows = (stats && stats.by_dept) || [];
+    } else if (mode === "status") {
+      rows = (stats && stats.by_status) || [];
+    } else {
+      rows = ((stats && stats.by_year) || []).slice().sort(function (a, b) {
+        return cohortSortKey(a.year) - cohortSortKey(b.year);
+      });
+      var other = stats && typeof stats.other === "number" ? stats.other : 0;
+      rows.forEach(function (row) {
+        if (!row || !row.people) return;
+        yearsEl.appendChild(makeYearItem(row.people, row.label || row.year + "학번"));
+      });
+      if (other > 0) yearsEl.appendChild(makeYearItem(other, "기타"));
+      return;
+    }
+    rows.forEach(function (row) {
+      if (!row) return;
+      if (!row.people && row.key === "other") return;
+      yearsEl.appendChild(makeYearItem(row.people || 0, row.label || ""));
+    });
+  }
+
+  function setTallyTab(mode) {
+    activeTally = mode || "year";
+    var tabs = tallyEl ? tallyEl.querySelectorAll(".tally-tab") : [];
+    Array.prototype.forEach.call(tabs, function (tab) {
+      var on = tab.getAttribute("data-tally") === activeTally;
+      tab.classList.toggle("is-active", on);
+      tab.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    renderBreakdown(latestStats, activeTally);
+  }
+
   function renderStats(stats) {
     if (!tallyEl) return;
-    var attend = stats && typeof stats.attend === "number" ? stats.attend : 0;
-    var byYear = ((stats && stats.by_year) || []).slice().sort(function (a, b) {
-      return cohortSortKey(a.year) - cohortSortKey(b.year);
-    });
-    var other = stats && typeof stats.other === "number" ? stats.other : 0;
-
+    latestStats = stats || {};
+    var attend = latestStats && typeof latestStats.attend === "number" ? latestStats.attend : 0;
     if (attendEl) attendEl.textContent = String(attend);
-    if (!yearsEl) return;
+    setTallyTab(activeTally);
+  }
 
-    yearsEl.innerHTML = "";
-    byYear.forEach(function (row) {
-      if (!row || !row.people) return;
-      yearsEl.appendChild(makeYearItem(row.people, row.label || (row.year + "학번")));
+  if (tallyEl) {
+    tallyEl.addEventListener("click", function (event) {
+      var tab = event.target.closest(".tally-tab");
+      if (!tab) return;
+      setTallyTab(tab.getAttribute("data-tally"));
     });
-    if (other > 0) {
-      yearsEl.appendChild(makeYearItem(other, "기타"));
-    }
   }
 
   function selectedLabel(select) {

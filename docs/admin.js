@@ -245,22 +245,77 @@
       });
   }
 
+  var adminTallyMode = "year";
+  var adminLatestStats = null;
+
+  function renderAdminBreakdown(stats, mode) {
+    var list = document.getElementById("admin-tally-list");
+    if (!list) return;
+    list.innerHTML = "";
+    function addItem(count, label) {
+      var p = document.createElement("p");
+      p.innerHTML = "<strong>" + (count || 0) + "</strong> " + label;
+      list.appendChild(p);
+    }
+    if (mode === "dept") {
+      (stats.by_dept || []).forEach(function (row) {
+        if (!row.people && row.key === "other") return;
+        addItem(row.people, row.label);
+      });
+      return;
+    }
+    if (mode === "status") {
+      (stats.by_status || []).forEach(function (row) {
+        if (!row.people && row.key === "other") return;
+        addItem(row.people, row.label);
+      });
+      return;
+    }
+    (stats.by_year || []).forEach(function (row) {
+      addItem(row.people, row.label);
+    });
+    if (stats.other) addItem(stats.other, "기타");
+  }
+
   function renderStats(stats) {
     adminStats.innerHTML = "";
     if (!stats) return;
+    adminLatestStats = stats;
     var total = document.createElement("p");
+    total.className = "admin-tally-total";
     total.innerHTML = "<strong>" + (stats.attend || 0) + "</strong> 전체 참석";
     adminStats.appendChild(total);
-    (stats.by_year || []).forEach(function (row) {
-      var p = document.createElement("p");
-      p.innerHTML = "<strong>" + row.people + "</strong> " + row.label;
-      adminStats.appendChild(p);
+
+    var tabs = document.createElement("div");
+    tabs.className = "tally-tabs admin-tally-tabs";
+    tabs.setAttribute("role", "tablist");
+    [
+      ["year", "학번별"],
+      ["dept", "소속학과별"],
+      ["status", "재학생·졸업생"],
+    ].forEach(function (pair) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "tally-tab" + (pair[0] === adminTallyMode ? " is-active" : "");
+      btn.setAttribute("data-tally", pair[0]);
+      btn.textContent = pair[1];
+      btn.addEventListener("click", function () {
+        adminTallyMode = pair[0];
+        Array.prototype.forEach.call(tabs.querySelectorAll(".tally-tab"), function (tab) {
+          var on = tab.getAttribute("data-tally") === adminTallyMode;
+          tab.classList.toggle("is-active", on);
+        });
+        renderAdminBreakdown(adminLatestStats, adminTallyMode);
+      });
+      tabs.appendChild(btn);
     });
-    if (stats.other) {
-      var other = document.createElement("p");
-      other.innerHTML = "<strong>" + stats.other + "</strong> 기타";
-      adminStats.appendChild(other);
-    }
+    adminStats.appendChild(tabs);
+
+    var list = document.createElement("div");
+    list.id = "admin-tally-list";
+    list.className = "admin-tally-list";
+    adminStats.appendChild(list);
+    renderAdminBreakdown(stats, adminTallyMode);
   }
 
   function renderRows(rows) {

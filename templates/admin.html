@@ -29,23 +29,27 @@
       <button type="submit">명단 보기</button>
     </form>
     {% else %}
-    <section class="admin-stats" aria-label="집계">
-      <p><strong>{{ stats.attend }}</strong> 전체 참석</p>
-      {% for row in stats.by_year %}
-      <p><strong>{{ row.people }}</strong> {{ row.label }}</p>
-      {% endfor %}
-      {% if stats.other %}
-      <p><strong>{{ stats.other }}</strong> 기타</p>
-      {% endif %}
+    <section class="admin-stats" id="admin-stats" aria-label="집계"
+             data-attend="{{ stats.attend }}"
+             data-other="{{ stats.other }}"
+             data-by-year='{{ stats.by_year|tojson }}'
+             data-by-dept='{{ stats.by_dept|tojson }}'
+             data-by-status='{{ stats.by_status|tojson }}'>
+      <p class="admin-tally-total"><strong>{{ stats.attend }}</strong> 전체 참석</p>
+      <div class="tally-tabs admin-tally-tabs" role="tablist" aria-label="참석 통계 구분">
+        <button type="button" class="tally-tab is-active" data-tally="year">학번별</button>
+        <button type="button" class="tally-tab" data-tally="dept">소속학과별</button>
+        <button type="button" class="tally-tab" data-tally="status">재학생·졸업생</button>
+      </div>
+      <div class="admin-tally-list" id="admin-tally-list">
+        {% for row in stats.by_year %}
+        <p><strong>{{ row.people }}</strong> {{ row.label }}</p>
+        {% endfor %}
+        {% if stats.other %}
+        <p><strong>{{ stats.other }}</strong> 기타</p>
+        {% endif %}
+      </div>
     </section>
-
-    {% if by_affiliation %}
-    <ul class="affil">
-      {% for row in by_affiliation %}
-      <li>{{ affiliations[row.affiliation] }} {{ row.people }}명</li>
-      {% endfor %}
-    </ul>
-    {% endif %}
 
     <div class="admin-actions">
       <a class="button" href="{{ url_for('admin_export') }}">CSV 내려받기</a>
@@ -102,5 +106,50 @@
     {% endif %}
     {% endif %}
   </main>
+  {% if rows is not none %}
+  <script>
+    (function () {
+      var root = document.getElementById("admin-stats");
+      var list = document.getElementById("admin-tally-list");
+      if (!root || !list) return;
+      var stats = {
+        other: Number(root.getAttribute("data-other") || 0),
+        by_year: JSON.parse(root.getAttribute("data-by-year") || "[]"),
+        by_dept: JSON.parse(root.getAttribute("data-by-dept") || "[]"),
+        by_status: JSON.parse(root.getAttribute("data-by-status") || "[]"),
+      };
+      var mode = "year";
+      function render(next) {
+        mode = next || mode;
+        Array.prototype.forEach.call(root.querySelectorAll(".tally-tab"), function (tab) {
+          tab.classList.toggle("is-active", tab.getAttribute("data-tally") === mode);
+        });
+        var html = "";
+        function add(count, label) {
+          html += "<p><strong>" + count + "</strong> " + label + "</p>";
+        }
+        if (mode === "dept") {
+          (stats.by_dept || []).forEach(function (row) {
+            if (!row.people && row.key === "other") return;
+            add(row.people || 0, row.label);
+          });
+        } else if (mode === "status") {
+          (stats.by_status || []).forEach(function (row) {
+            if (!row.people && row.key === "other") return;
+            add(row.people || 0, row.label);
+          });
+        } else {
+          (stats.by_year || []).forEach(function (row) { add(row.people, row.label); });
+          if (stats.other) add(stats.other, "기타");
+        }
+        list.innerHTML = html;
+      }
+      root.addEventListener("click", function (event) {
+        var tab = event.target.closest(".tally-tab");
+        if (tab) render(tab.getAttribute("data-tally"));
+      });
+    })();
+  </script>
+  {% endif %}
 </body>
 </html>

@@ -148,19 +148,31 @@
           <p>참석 여부를 선택한 뒤 보내 주세요.</p>
         </div>
 
-        <div class="tally-board" aria-label="현재 참석 집계">
+        <div class="tally-board" id="tally" aria-label="현재 참석 집계"
+             data-attend="{{ stats.attend }}"
+             data-other="{{ stats.other }}"
+             data-by-year='{{ stats.by_year|tojson }}'
+             data-by-dept='{{ stats.by_dept|tojson }}'
+             data-by-status='{{ stats.by_status|tojson }}'>
           <div class="tally-total">
-            <strong>{{ stats.attend }}</strong>
+            <strong id="attend-count">{{ stats.attend }}</strong>
             <span>전체 참석</span>
           </div>
-          <ul class="tally-years">
-            {% for row in stats.by_year %}
-            <li><strong>{{ row.people }}</strong><span>{{ row.label }}</span></li>
-            {% endfor %}
-            {% if stats.other %}
-            <li><strong>{{ stats.other }}</strong><span>기타</span></li>
-            {% endif %}
-          </ul>
+          <div class="tally-side">
+            <div class="tally-tabs" role="tablist" aria-label="참석 통계 구분">
+              <button type="button" class="tally-tab is-active" role="tab" aria-selected="true" data-tally="year">학번별</button>
+              <button type="button" class="tally-tab" role="tab" aria-selected="false" data-tally="dept">소속학과별</button>
+              <button type="button" class="tally-tab" role="tab" aria-selected="false" data-tally="status">재학생·졸업생</button>
+            </div>
+            <ul class="tally-years" id="tally-years">
+              {% for row in stats.by_year %}
+              <li><strong>{{ row.people }}</strong><span>{{ row.label }}</span></li>
+              {% endfor %}
+              {% if stats.other %}
+              <li><strong>{{ stats.other }}</strong><span>기타</span></li>
+              {% endif %}
+            </ul>
+          </div>
         </div>
 
         {% if flash %}
@@ -268,6 +280,51 @@
 
   <script>
     (function () {
+      var tally = document.getElementById("tally");
+      var yearsEl = document.getElementById("tally-years");
+      if (tally && yearsEl) {
+        var stats = {
+          other: Number(tally.getAttribute("data-other") || 0),
+          by_year: JSON.parse(tally.getAttribute("data-by-year") || "[]"),
+          by_dept: JSON.parse(tally.getAttribute("data-by-dept") || "[]"),
+          by_status: JSON.parse(tally.getAttribute("data-by-status") || "[]"),
+        };
+        var mode = "year";
+        function item(count, label) {
+          return "<li><strong>" + count + "</strong><span>" + label + "</span></li>";
+        }
+        function render(next) {
+          mode = next || mode;
+          Array.prototype.forEach.call(tally.querySelectorAll(".tally-tab"), function (tab) {
+            var on = tab.getAttribute("data-tally") === mode;
+            tab.classList.toggle("is-active", on);
+            tab.setAttribute("aria-selected", on ? "true" : "false");
+          });
+          var html = "";
+          if (mode === "dept") {
+            (stats.by_dept || []).forEach(function (row) {
+              if (!row.people && row.key === "other") return;
+              html += item(row.people || 0, row.label);
+            });
+          } else if (mode === "status") {
+            (stats.by_status || []).forEach(function (row) {
+              if (!row.people && row.key === "other") return;
+              html += item(row.people || 0, row.label);
+            });
+          } else {
+            (stats.by_year || []).forEach(function (row) {
+              html += item(row.people, row.label);
+            });
+            if (stats.other) html += item(stats.other, "기타");
+          }
+          yearsEl.innerHTML = html;
+        }
+        tally.addEventListener("click", function (event) {
+          var tab = event.target.closest(".tally-tab");
+          if (tab) render(tab.getAttribute("data-tally"));
+        });
+      }
+
       var tabs = Array.prototype.slice.call(document.querySelectorAll(".tab"));
       var panels = {
         info: document.getElementById("panel-info"),

@@ -402,6 +402,43 @@ h1 {
   margin: 0 0 18px;
 }
 
+.tally-side {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  min-width: 0;
+}
+
+.tally-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.tally-tab {
+  margin: 0;
+  padding: 10px 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper-2);
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.tally-tab.is-active {
+  background: var(--navy);
+  color: #fff;
+  border-color: var(--navy);
+}
+
+.tally-tab:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
 .tally-total {
   display: flex;
   flex-direction: column;
@@ -785,9 +822,8 @@ button:hover,
 }
 
 .admin-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 18px 28px;
+  display: grid;
+  gap: 14px;
   margin: 22px 0 8px;
 }
 
@@ -796,6 +832,16 @@ button:hover,
 .admin-stats strong {
   font-family: "Noto Serif KR", serif;
   font-size: 28px;
+}
+
+.admin-tally-tabs {
+  max-width: 520px;
+}
+
+.admin-tally-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px 28px;
 }
 
 .affil {
@@ -871,6 +917,8 @@ td:nth-child(9) { white-space: normal; min-width: 160px; }
   }
 
   .tally-total { min-height: 120px; }
+
+  .tally-tab { font-size: 12px; padding: 9px 6px; }
 
   .hero { padding-top: 28px; text-align: left; }
 

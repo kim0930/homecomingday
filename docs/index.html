@@ -261,7 +261,14 @@
             <strong id="attend-count">0</strong>
             <span>전체 참석</span>
           </div>
-          <ul class="tally-years" id="tally-years"></ul>
+          <div class="tally-side">
+            <div class="tally-tabs" role="tablist" aria-label="참석 통계 구분">
+              <button type="button" class="tally-tab is-active" role="tab" aria-selected="true" data-tally="year">학번별</button>
+              <button type="button" class="tally-tab" role="tab" aria-selected="false" data-tally="dept">소속학과별</button>
+              <button type="button" class="tally-tab" role="tab" aria-selected="false" data-tally="status">재학생·졸업생</button>
+            </div>
+            <ul class="tally-years" id="tally-years"></ul>
+          </div>
         </div>
 
         <form id="rsvp-form" method="post" action="#" novalidate>
