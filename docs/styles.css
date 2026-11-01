@@ -710,6 +710,11 @@ button:hover,
 
 .admin h1 { margin: 0; font-size: 36px; }
 
+.admin h2 {
+  margin: 0 0 14px;
+  font-size: 22px;
+}
+
 .text-link { color: var(--gold-deep); }
 
 .login {
@@ -717,6 +722,55 @@ button:hover,
   margin-top: 28px;
   display: grid;
   gap: 12px;
+}
+
+.admin-card {
+  margin: 24px 0;
+  padding: 22px;
+  background: var(--paper);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+.admin-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.admin-card-head h2 { margin: 0; }
+
+.admin-fields {
+  margin-top: 8px;
+}
+
+.program-editor {
+  display: grid;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.program-row {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  background: var(--paper-2);
+  border-radius: 10px;
+}
+
+.program-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin code {
+  font-size: 12px;
+  background: #eef2f8;
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
 .admin-stats {

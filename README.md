@@ -6,19 +6,25 @@
 
 공개 안내는 `docs/` 정적 사이트로 호스팅됩니다.
 
-- 참석 회신·실시간 참석 인원 집계는 Google 스프레드시트 + Apps Script 웹 앱으로 처리합니다.
-- 회신 내용은 Google 시트에 저장됩니다. (`Code.gs`의 `NOTIFY_EMAIL`을 채우면 알림 메일도 보낼 수 있습니다.)
-- 같은 연락처로 다시 보내면 기존 행이 수정됩니다. 공개 화면에는 **참석** 인원만 표시합니다.
+- 참석 회신·실시간 집계·행사 안내/식순 편집은 Google 스프레드시트 + Apps Script 웹 앱으로 처리합니다.
+- 공개 페이지: https://kim0930.github.io/homecomingday/
+- 관리자: https://kim0930.github.io/homecomingday/admin.html  
+  기본 비밀번호: `ae-night-2026` (`Code.gs`의 `ADMIN_PASSWORD`)
 
-### Apps Script 배포 (최초 1회)
+### 관리자에서 할 수 있는 일
 
-1. [새 Google 스프레드시트](https://sheets.google.com)를 만듭니다.
-2. **확장 프로그램 → Apps Script**에서 `docs/sheets-api/Code.gs` 내용을 붙여 넣고 저장합니다.
-3. 알림 메일이 필요하면 `NOTIFY_EMAIL`에 주소를 넣습니다. (기본은 비활성, 시트 저장만)
-4. **배포 → 새 배포 → 유형: 웹 앱**
+- **행사 안내** / **이날의 자리** 내용 수정·저장 (공개 페이지에 즉시 반영)
+- **참석 회신 상세** 미리보기 및 **엑셀(.xlsx) 내려받기**
+
+### Apps Script 배포 (최초 1회 또는 Code.gs 수정 후)
+
+1. 사용 중인 Google 스프레드시트에서 **확장 프로그램 → Apps Script**를 엽니다.
+2. `docs/sheets-api/Code.gs` 전체를 붙여 넣고 저장합니다.
+3. 필요하면 `ADMIN_PASSWORD`, `NOTIFY_EMAIL`을 수정합니다.
+4. **배포 → 새 배포**(또는 기존 배포의 **새 버전 관리**) → 유형: **웹 앱**
    - 실행 계정: **나**
    - 액세스 권한: **모든 사용자**
-5. 배포된 웹 앱 URL을 복사해 `docs/rsvp-config.js`의 `API_URL`에 넣습니다.
+5. 웹 앱 URL을 `docs/rsvp-config.js`의 `API_URL`에 넣고 push합니다.
 
 ```js
 window.RSVP_CONFIG = {
@@ -26,11 +32,9 @@ window.RSVP_CONFIG = {
 };
 ```
 
-6. `docs/`를 GitHub Pages로 배포(또는 push)한 뒤, 페이지에서 참석 숫자가 갱신되는지 확인합니다.
-7. 코드를 수정하면 Apps Script에서 **새 버전으로 다시 배포**해야 반영됩니다.
-8. 참석 집계(전체·학번별·기타)는 Apps Script `stats_()` 결과를 GitHub Pages가 불러와 표시합니다. `Code.gs`를 고친 뒤에는 반드시 웹 앱을 **새 버전으로 재배포**하세요.
+6. 첫 관리자 로그인 시 `Content`, `Program` 시트가 자동 생성되며 기본 안내·식순이 채워집니다.
 
-## 로컬 Flask (명단·CSV 관리)
+## 로컬 Flask
 
 ```bash
 python -m venv .venv
@@ -40,5 +44,5 @@ python app.py
 ```
 
 - 안내/회신: http://127.0.0.1:5000/
-- 관리 명단: http://127.0.0.1:5000/admin  
-  기본 비밀번호: `ae-night-2026` (`ADMIN_PASSWORD`로 변경 가능)
+- 로컬 명단: http://127.0.0.1:5000/admin  
+  (SQLite 기준. 공개 사이트의 시트 데이터와는 별개입니다.)

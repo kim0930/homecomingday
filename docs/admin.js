@@ -1,0 +1,340 @@
+(function () {
+  var config = window.RSVP_CONFIG || {};
+  var apiUrl = (config.API_URL || "").trim();
+  var password = sessionStorage.getItem("ae_admin_password") || "";
+
+  var CONTENT_FIELDS = [
+    { key: "date", label: "일시(날짜)" },
+    { key: "time", label: "시간" },
+    { key: "campus", label: "캠퍼스" },
+    { key: "place", label: "장소" },
+    { key: "map_url", label: "지도 URL" },
+    { key: "audience", label: "대상" },
+    { key: "sponsors", label: "후원" },
+    { key: "meal", label: "식사" },
+    { key: "benefit", label: "학생 특전" },
+    { key: "raffle", label: "경품" },
+    { key: "contact", label: "문의 전화" },
+    { key: "invite_title", label: "초대 제목" },
+    { key: "invite_body", label: "초대 본문", wide: true },
+    { key: "note", label: "식순 안내 문구", wide: true },
+  ];
+
+  var loginPanel = document.getElementById("login-panel");
+  var adminPanel = document.getElementById("admin-panel");
+  var loginError = document.getElementById("login-error");
+  var saveStatus = document.getElementById("save-status");
+  var saveError = document.getElementById("save-error");
+  var contentFields = document.getElementById("content-fields");
+  var programEditor = document.getElementById("program-editor");
+  var rsvpBody = document.getElementById("rsvp-body");
+  var adminStats = document.getElementById("admin-stats");
+
+  function post(body) {
+    return fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(body),
+    }).then(function (res) {
+      return res.json();
+    });
+  }
+
+  function show(el, text) {
+    if (!el) return;
+    el.hidden = !text;
+    el.textContent = text || "";
+  }
+
+  function ensureApi() {
+    if (!apiUrl) {
+      show(loginError, "API_URL이 설정되지 않았습니다. rsvp-config.js를 확인하세요.");
+      return false;
+    }
+    return true;
+  }
+
+  function renderContentFields(content) {
+    contentFields.innerHTML = "";
+    CONTENT_FIELDS.forEach(function (field) {
+      var label = document.createElement("label");
+      if (field.wide) label.className = "wide";
+      var span = document.createElement("span");
+      span.textContent = field.label;
+      var input;
+      if (field.wide) {
+        input = document.createElement("textarea");
+        input.rows = 3;
+      } else {
+        input = document.createElement("input");
+      }
+      input.name = field.key;
+      input.value = (content && content[field.key]) || "";
+      label.appendChild(span);
+      label.appendChild(input);
+      contentFields.appendChild(label);
+    });
+  }
+
+  function readContent() {
+    var content = {};
+    CONTENT_FIELDS.forEach(function (field) {
+      var el = contentFields.querySelector('[name="' + field.key + '"]');
+      content[field.key] = el ? el.value : "";
+    });
+    return content;
+  }
+
+  function makeProgramRow(item) {
+    var wrap = document.createElement("div");
+    wrap.className = "program-row";
+    wrap.innerHTML =
+      '<label><span>제목</span><input name="title" /></label>' +
+      '<label class="wide"><span>비고 (줄바꿈 가능)</span><textarea name="remark" rows="2"></textarea></label>' +
+      '<div class="program-row-actions">' +
+      '<button type="button" class="ghost move-up">위로</button>' +
+      '<button type="button" class="ghost move-down">아래로</button>' +
+      '<button type="button" class="text-button remove-row">삭제</button>' +
+      "</div>";
+    wrap.querySelector('[name="title"]').value = (item && item.title) || "";
+    var remark = (item && item.remark) || [];
+    if (Object.prototype.toString.call(remark) !== "[object Array]") {
+      remark = remark ? [String(remark)] : [];
+    }
+    wrap.querySelector('[name="remark"]').value = remark.join("\n");
+    wrap.querySelector(".remove-row").addEventListener("click", function () {
+      wrap.remove();
+    });
+    wrap.querySelector(".move-up").addEventListener("click", function () {
+      if (wrap.previousElementSibling) {
+        programEditor.insertBefore(wrap, wrap.previousElementSibling);
+      }
+    });
+    wrap.querySelector(".move-down").addEventListener("click", function () {
+      if (wrap.nextElementSibling) {
+        programEditor.insertBefore(wrap.nextElementSibling, wrap);
+      }
+    });
+    return wrap;
+  }
+
+  function renderProgram(program) {
+    programEditor.innerHTML = "";
+    (program || []).forEach(function (item) {
+      programEditor.appendChild(makeProgramRow(item));
+    });
+    if (!programEditor.children.length) {
+      programEditor.appendChild(makeProgramRow({ title: "", remark: [] }));
+    }
+  }
+
+  function readProgram() {
+    return Array.prototype.slice.call(programEditor.querySelectorAll(".program-row")).map(function (row) {
+      var title = row.querySelector('[name="title"]').value.trim();
+      var remark = row
+        .querySelector('[name="remark"]')
+        .value.split(/\r?\n/)
+        .map(function (line) {
+          return line.trim();
+        })
+        .filter(Boolean);
+      return { title: title, remark: remark };
+    }).filter(function (item) {
+      return item.title;
+    });
+  }
+
+  function renderStats(stats) {
+    adminStats.innerHTML = "";
+    if (!stats) return;
+    var total = document.createElement("p");
+    total.innerHTML = "<strong>" + (stats.attend || 0) + "</strong> 전체 참석";
+    adminStats.appendChild(total);
+    (stats.by_year || []).forEach(function (row) {
+      var p = document.createElement("p");
+      p.innerHTML = "<strong>" + row.people + "</strong> " + row.label;
+      adminStats.appendChild(p);
+    });
+    if (stats.other) {
+      var other = document.createElement("p");
+      other.innerHTML = "<strong>" + stats.other + "</strong> 기타";
+      adminStats.appendChild(other);
+    }
+  }
+
+  function renderRows(rows) {
+    rsvpBody.innerHTML = "";
+    if (!rows || !rows.length) {
+      var empty = document.createElement("tr");
+      empty.innerHTML = '<td colspan="11">아직 회신이 없습니다.</td>';
+      rsvpBody.appendChild(empty);
+      return;
+    }
+    rows.forEach(function (row) {
+      var tr = document.createElement("tr");
+      [
+        row.updated_at,
+        row.name,
+        row.affiliation,
+        row.student_year,
+        row.grad_year,
+        row.workplace,
+        row.title,
+        row.phone,
+        row.email,
+        row.attendance,
+        row.message,
+      ].forEach(function (value) {
+        var td = document.createElement("td");
+        td.textContent = value || "—";
+        tr.appendChild(td);
+      });
+      rsvpBody.appendChild(tr);
+    });
+  }
+
+  function enterAdmin(data) {
+    password = data.password || password;
+    sessionStorage.setItem("ae_admin_password", password);
+    loginPanel.hidden = true;
+    adminPanel.hidden = false;
+    renderContentFields(data.content || {});
+    renderProgram(data.program || []);
+    renderStats(data.stats || null);
+    loadRows();
+  }
+
+  function loadRows() {
+    return post({ action: "admin_list", password: password }).then(function (data) {
+      if (!data || !data.ok) {
+        show(saveError, (data && data.error) || "명단을 불러오지 못했습니다.");
+        return;
+      }
+      renderStats(data.stats || null);
+      renderRows(data.rows || []);
+    });
+  }
+
+  function login() {
+    if (!ensureApi()) return;
+    var value = document.getElementById("admin-password").value;
+    show(loginError, "");
+    post({ action: "admin_login", password: value })
+      .then(function (data) {
+        if (!data || !data.ok) {
+          show(loginError, (data && data.error) || "로그인에 실패했습니다.");
+          return;
+        }
+        password = value;
+        enterAdmin(data);
+      })
+      .catch(function () {
+        show(loginError, "네트워크 오류로 로그인하지 못했습니다. Apps Script 재배포 여부를 확인하세요.");
+      });
+  }
+
+  function save() {
+    show(saveStatus, "");
+    show(saveError, "");
+    post({
+      action: "admin_save_content",
+      password: password,
+      content: readContent(),
+      program: readProgram(),
+    })
+      .then(function (data) {
+        if (!data || !data.ok) {
+          show(saveError, (data && data.error) || "저장에 실패했습니다.");
+          return;
+        }
+        renderContentFields(data.content || {});
+        renderProgram(data.program || []);
+        show(saveStatus, "저장했습니다. 공개 페이지를 새로고침하면 반영됩니다.");
+      })
+      .catch(function () {
+        show(saveError, "저장 중 네트워크 오류가 발생했습니다.");
+      });
+  }
+
+  function exportExcel() {
+    show(saveError, "");
+    post({ action: "admin_list", password: password })
+      .then(function (data) {
+        if (!data || !data.ok) {
+          show(saveError, (data && data.error) || "명단을 불러오지 못했습니다.");
+          return;
+        }
+        var rows = data.rows || [];
+        var sheetRows = [
+          [
+            "수정시각",
+            "이름",
+            "소속학과",
+            "학번",
+            "졸업연도",
+            "현직장",
+            "직책",
+            "연락처",
+            "이메일",
+            "참석여부",
+            "메시지",
+            "동의",
+          ],
+        ];
+        rows.forEach(function (row) {
+          sheetRows.push([
+            row.updated_at || "",
+            row.name || "",
+            row.affiliation || "",
+            row.student_year || "",
+            row.grad_year || "",
+            row.workplace || "",
+            row.title || "",
+            row.phone || "",
+            row.email || "",
+            row.attendance || "",
+            row.message || "",
+            row.consent || "",
+          ]);
+        });
+        if (typeof XLSX === "undefined") {
+          show(saveError, "엑셀 라이브러리를 불러오지 못했습니다.");
+          return;
+        }
+        var workbook = XLSX.utils.book_new();
+        var worksheet = XLSX.utils.aoa_to_sheet(sheetRows);
+        XLSX.utils.book_append_sheet(workbook, worksheet, "참석회신");
+        XLSX.writeFile(workbook, "건축공학인의밤_참석회신.xlsx");
+      })
+      .catch(function () {
+        show(saveError, "엑셀 내려받기에 실패했습니다.");
+      });
+  }
+
+  document.getElementById("login-btn").addEventListener("click", login);
+  document.getElementById("admin-password").addEventListener("keydown", function (event) {
+    if (event.key === "Enter") login();
+  });
+  document.getElementById("logout-btn").addEventListener("click", function () {
+    sessionStorage.removeItem("ae_admin_password");
+    password = "";
+    adminPanel.hidden = true;
+    loginPanel.hidden = false;
+  });
+  document.getElementById("save-btn").addEventListener("click", save);
+  document.getElementById("export-btn").addEventListener("click", exportExcel);
+  document.getElementById("add-program").addEventListener("click", function () {
+    programEditor.appendChild(makeProgramRow({ title: "", remark: [] }));
+  });
+
+  if (password && apiUrl) {
+    post({ action: "admin_login", password: password })
+      .then(function (data) {
+        if (data && data.ok) enterAdmin(data);
+        else sessionStorage.removeItem("ae_admin_password");
+      })
+      .catch(function () {
+        sessionStorage.removeItem("ae_admin_password");
+      });
+  }
+})();
