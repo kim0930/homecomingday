@@ -2,6 +2,7 @@
   var config = window.RSVP_CONFIG || {};
   var apiUrl = (config.API_URL || "").trim();
   var form = document.getElementById("rsvp-form");
+  var tallyEl = document.getElementById("tally");
   var attendEl = document.getElementById("attend-count");
   var sectionHead = document.querySelector(".reply-card .section-head");
 
@@ -36,8 +37,38 @@
     if (sectionHead) sectionHead.insertAdjacentElement("afterend", box);
   }
 
-  function setAttend(count) {
-    if (attendEl) attendEl.textContent = String(count == null ? 0 : count);
+  function makeItem(count, label) {
+    var li = document.createElement("li");
+    var strong = document.createElement("strong");
+    strong.textContent = String(count == null ? 0 : count);
+    var span = document.createElement("span");
+    span.textContent = label;
+    li.appendChild(strong);
+    li.appendChild(span);
+    return li;
+  }
+
+  function renderStats(stats) {
+    if (!tallyEl) return;
+    var attend = stats && typeof stats.attend === "number" ? stats.attend : 0;
+    var byYear = (stats && stats.by_year) || [];
+    var other = stats && typeof stats.other === "number" ? stats.other : 0;
+
+    tallyEl.innerHTML = "";
+    var totalItem = makeItem(attend, "전체 참석");
+    totalItem.querySelector("strong").id = "attend-count";
+    tallyEl.appendChild(totalItem);
+
+    byYear.forEach(function (row) {
+      if (!row || !row.people) return;
+      tallyEl.appendChild(makeItem(row.people, row.label || (row.year + "학번")));
+    });
+
+    if (other > 0) {
+      tallyEl.appendChild(makeItem(other, "기타"));
+    }
+
+    attendEl = document.getElementById("attend-count");
   }
 
   function selectedLabel(select) {
@@ -46,13 +77,13 @@
   }
 
   function loadStats() {
-    if (!apiUrl || !attendEl) return;
+    if (!apiUrl || !tallyEl) return;
     fetch(apiUrl, { method: "GET" })
       .then(function (res) {
         return res.json();
       })
       .then(function (data) {
-        if (data && typeof data.attend === "number") setAttend(data.attend);
+        if (data) renderStats(data);
       })
       .catch(function () {
         /* 집계 API가 아직 없으면 0 유지 */
@@ -135,9 +166,7 @@
             showWarn([(data && data.error) || "회신 전송에 실패했습니다. 잠시 후 다시 시도해 주세요."]);
             return;
           }
-          if (data.stats && typeof data.stats.attend === "number") {
-            setAttend(data.stats.attend);
-          }
+          if (data.stats) renderStats(data.stats);
           var status = data.attendance || "회신";
           var text = status + "으로 회신했습니다. 확인해 주셔서 감사합니다.";
           if (data.updated) text += " 같은 연락처의 이전 응답을 수정했습니다.";

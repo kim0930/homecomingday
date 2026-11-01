@@ -97,12 +97,42 @@ function stats_() {
   var values = sheet.getDataRange().getValues();
   var attend = 0;
   var decline = 0;
+  var yearCounts = {};
+  var other = 0;
   for (var i = 1; i < values.length; i++) {
     var key = String(values[i][13] || "");
-    if (key === "attend") attend++;
-    else if (key === "decline") decline++;
+    if (key === "attend") {
+      attend++;
+      var yearLabel = String(values[i][3] || "");
+      var match = yearLabel.match(/(\d{2})학번/);
+      if (match) {
+        var year = match[1];
+        yearCounts[year] = (yearCounts[year] || 0) + 1;
+      } else {
+        other++;
+      }
+    } else if (key === "decline") {
+      decline++;
+    }
   }
-  return { attend: attend, decline: decline, total: attend + decline };
+  var byYear = Object.keys(yearCounts)
+    .sort(function (a, b) {
+      return Number(b) - Number(a);
+    })
+    .map(function (year) {
+      return {
+        year: year,
+        label: year + "학번",
+        people: yearCounts[year],
+      };
+    });
+  return {
+    attend: attend,
+    decline: decline,
+    total: attend + decline,
+    by_year: byYear,
+    other: other,
+  };
 }
 
 function digits_(value) {

@@ -28,6 +28,7 @@ window.RSVP_CONFIG = {
 
 6. `docs/`를 GitHub Pages로 배포(또는 push)한 뒤, 페이지에서 참석 숫자가 갱신되는지 확인합니다.
 7. 코드를 수정하면 Apps Script에서 **새 버전으로 다시 배포**해야 반영됩니다.
+8. 참석 집계(전체·학번별·기타)는 Apps Script `stats_()` 결과를 GitHub Pages가 불러와 표시합니다. `Code.gs`를 고친 뒤에는 반드시 웹 앱을 **새 버전으로 재배포**하세요.
 
 ## 로컬 Flask (명단·CSV 관리)
 
