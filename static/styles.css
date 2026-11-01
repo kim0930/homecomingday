@@ -395,32 +395,55 @@ h1 {
 }
 
 .tally {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 120px));
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: flex-start;
   margin: 0 0 18px;
   padding: 0;
   list-style: none;
 }
 
 .tally li {
-  padding: 14px 12px;
+  flex: 0 0 auto;
+  min-width: 92px;
+  padding: 12px 10px;
   background: var(--paper-2);
   text-align: center;
   border-radius: 12px;
 }
 
+.tally-total,
+.tally li:first-child {
+  min-width: 148px;
+  padding: 16px 18px;
+  background: #eef2f8;
+  border: 1px solid var(--line);
+}
+
 .tally strong {
   display: block;
   font-family: "Noto Serif KR", serif;
-  font-size: 30px;
+  font-size: 26px;
   font-weight: 600;
   color: var(--navy);
   line-height: 1.1;
 }
 
+.tally-total strong,
+.tally li:first-child strong {
+  font-size: 44px;
+}
+
 .tally span { color: var(--muted); font-size: 13px; }
+
+.tally-total span,
+.tally li:first-child span {
+  color: var(--navy);
+  font-size: 14px;
+  font-weight: 650;
+}
 
 .form-note {
   margin: 14px 0 0;

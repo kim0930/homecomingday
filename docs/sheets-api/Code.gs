@@ -117,7 +117,7 @@ function stats_() {
   }
   var byYear = Object.keys(yearCounts)
     .sort(function (a, b) {
-      return Number(b) - Number(a);
+      return cohortSortKey_(a) - cohortSortKey_(b);
     })
     .map(function (year) {
       return {
@@ -133,6 +133,16 @@ function stats_() {
     by_year: byYear,
     other: other,
   };
+}
+
+/** 80~99 → 1980~1999, 00~49 → 2000~2049 */
+function cohortSortKey_(year) {
+  var value = parseInt(year, 10);
+  if (isNaN(value)) return 9999;
+  if (value >= 80 && value <= 99) return 1900 + value;
+  if (value >= 0 && value < 50) return 2000 + value;
+  if (value >= 50 && value <= 79) return 1900 + value;
+  return 2000 + value;
 }
 
 function digits_(value) {

@@ -37,8 +37,19 @@
     if (sectionHead) sectionHead.insertAdjacentElement("afterend", box);
   }
 
-  function makeItem(count, label) {
+  /** 80~99 → 1980~1999, 00~49 → 2000~2049 */
+  function cohortSortKey(year) {
+    var value = parseInt(year, 10);
+    if (isNaN(value)) return 9999;
+    if (value >= 80 && value <= 99) return 1900 + value;
+    if (value >= 0 && value < 50) return 2000 + value;
+    if (value >= 50 && value <= 79) return 1900 + value;
+    return 2000 + value;
+  }
+
+  function makeItem(count, label, isTotal) {
     var li = document.createElement("li");
+    if (isTotal) li.className = "tally-total";
     var strong = document.createElement("strong");
     strong.textContent = String(count == null ? 0 : count);
     var span = document.createElement("span");
@@ -51,21 +62,23 @@
   function renderStats(stats) {
     if (!tallyEl) return;
     var attend = stats && typeof stats.attend === "number" ? stats.attend : 0;
-    var byYear = (stats && stats.by_year) || [];
+    var byYear = ((stats && stats.by_year) || []).slice().sort(function (a, b) {
+      return cohortSortKey(a.year) - cohortSortKey(b.year);
+    });
     var other = stats && typeof stats.other === "number" ? stats.other : 0;
 
     tallyEl.innerHTML = "";
-    var totalItem = makeItem(attend, "전체 참석");
+    var totalItem = makeItem(attend, "전체 참석", true);
     totalItem.querySelector("strong").id = "attend-count";
     tallyEl.appendChild(totalItem);
 
     byYear.forEach(function (row) {
       if (!row || !row.people) return;
-      tallyEl.appendChild(makeItem(row.people, row.label || (row.year + "학번")));
+      tallyEl.appendChild(makeItem(row.people, row.label || (row.year + "학번"), false));
     });
 
     if (other > 0) {
-      tallyEl.appendChild(makeItem(other, "기타"));
+      tallyEl.appendChild(makeItem(other, "기타", false));
     }
 
     attendEl = document.getElementById("attend-count");

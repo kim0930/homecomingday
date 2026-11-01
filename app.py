@@ -459,6 +459,21 @@ def parse_student_year(detail):
     return match.group(1) if match else ""
 
 
+def cohort_sort_key(year):
+    """80~99 → 1980~1999, 00~49 → 2000~2049."""
+    try:
+        value = int(year)
+    except (TypeError, ValueError):
+        return 9999
+    if 80 <= value <= 99:
+        return 1900 + value
+    if 0 <= value < 50:
+        return 2000 + value
+    if 50 <= value <= 79:
+        return 1900 + value
+    return 2000 + value
+
+
 def attendance_stats():
     with connect() as conn:
         rows = conn.execute(
@@ -475,15 +490,18 @@ def attendance_stats():
     other = 0
     for (detail,) in details:
         year = parse_student_year(detail)
-        if year in STUDENT_YEARS:
+        if year:
             year_counts[year] = year_counts.get(year, 0) + 1
         else:
             other += 1
 
     by_year = [
-        {"year": year, "label": STUDENT_YEARS[year], "people": year_counts[year]}
-        for year in STUDENT_YEARS
-        if year in year_counts
+        {
+            "year": year,
+            "label": STUDENT_YEARS.get(year, f"{year}학번"),
+            "people": year_counts[year],
+        }
+        for year in sorted(year_counts, key=cohort_sort_key)
     ]
     return {
         "attend": attend,
