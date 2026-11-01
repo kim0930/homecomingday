@@ -4,8 +4,8 @@
   var password = sessionStorage.getItem("ae_admin_password") || "";
 
   var CONTENT_FIELDS = [
-    { key: "date", label: "일시(날짜)" },
-    { key: "time", label: "시간" },
+    { key: "date", label: "날짜 (예: 2026년 11월 11일(수))" },
+    { key: "time", label: "시간 (예: 18:00)" },
     { key: "campus", label: "캠퍼스" },
     { key: "place", label: "장소" },
     { key: "map_url", label: "지도 URL" },

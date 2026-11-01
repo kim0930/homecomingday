@@ -50,7 +50,7 @@ var HEADERS = [
 ];
 
 var DEFAULT_CONTENT = {
-  date: "2026년 11월 11일 (수)",
+  date: "2026년 11월 11일(수)",
   time: "18:00",
   place: "100주년기념관 3층 목산갤러리",
   campus: "서울과학기술대학교",
@@ -243,6 +243,41 @@ function programSheet_() {
   return sheet;
 }
 
+function formatContentValue_(key, value) {
+  var days = ["일", "월", "화", "수", "목", "금", "토"];
+  if (Object.prototype.toString.call(value) === "[object Date]" && !isNaN(value.getTime())) {
+    if (key === "date") {
+      return (
+        Utilities.formatDate(value, "Asia/Seoul", "yyyy년 M월 d일") +
+        "(" +
+        days[value.getDay()] +
+        ")"
+      );
+    }
+    if (key === "time") {
+      return Utilities.formatDate(value, "Asia/Seoul", "HH:mm");
+    }
+    return Utilities.formatDate(value, "Asia/Seoul", "yyyy년 M월 d일 HH:mm");
+  }
+  var text = String(value == null ? "" : value).trim();
+  if (key === "date") {
+    text = text
+      .replace(/\b(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Mon|Tue|Wed|Thu|Fri|Sat|Sun)\b/gi, "")
+      .replace(/\b(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    text = text.replace(/\s*\(([일월화수목금토])\)\s*/g, "($1)");
+  }
+  if (key === "time") {
+    var tm = text.match(/^(\d{1,2}):(\d{2})/);
+    if (tm) {
+      text =
+        (tm[1].length === 1 ? "0" + tm[1] : tm[1]) + ":" + tm[2];
+    }
+  }
+  return text;
+}
+
 function getContent_() {
   var sheet = contentSheet_();
   var values = sheet.getDataRange().getValues();
@@ -252,7 +287,7 @@ function getContent_() {
   });
   for (var i = 1; i < values.length; i++) {
     var key = String(values[i][0] || "").trim();
-    if (key) content[key] = String(values[i][1] == null ? "" : values[i][1]);
+    if (key) content[key] = formatContentValue_(key, values[i][1]);
   }
   return content;
 }
@@ -266,11 +301,15 @@ function saveContent_(incoming) {
     merged[key] = DEFAULT_CONTENT[key];
   });
   Object.keys(incoming || {}).forEach(function (key) {
-    merged[key] = String(incoming[key] == null ? "" : incoming[key]);
+    merged[key] = formatContentValue_(key, incoming[key]);
   });
   Object.keys(merged).forEach(function (key) {
     sheet.appendRow([key, merged[key]]);
   });
+  // 날짜·시간이 시트에서 영어 Date로 바뀌지 않도록 텍스트 서식 고정
+  if (sheet.getLastRow() >= 2) {
+    sheet.getRange(2, 2, sheet.getLastRow() - 1, 1).setNumberFormat("@");
+  }
 }
 
 function getProgram_() {
