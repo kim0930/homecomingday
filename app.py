@@ -1,7 +1,7 @@
 """2026 건축공학인의 밤 안내 및 참석 회신.
 
 실행: python app.py
-관리 화면: /admin  (비밀번호는 ADMIN_PASSWORD, 기본값 ae-night-2026)
+관리 화면: /admin  (비밀번호는 ADMIN_PASSWORD 환경변수 또는 Code.gs와 동일)
 """
 
 import csv
@@ -30,7 +30,7 @@ DB_PATH = DATA_DIR / "rsvp.db"
 SECRET_PATH = DATA_DIR / ".secret"
 KST = timezone(timedelta(hours=9))
 
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "ae-night-2026")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "029706537")
 
 AFFILIATIONS = {
     "ae_student": "건축공학전공 재학생",

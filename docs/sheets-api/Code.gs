@@ -10,7 +10,7 @@
  */
 
 var NOTIFY_EMAIL = "";
-var ADMIN_PASSWORD = "ae-night-2026";
+var ADMIN_PASSWORD = "029706537";
 var SHEET_NAME = "RSVPs";
 var CONTENT_SHEET = "Content";
 var PROGRAM_SHEET = "Program";
