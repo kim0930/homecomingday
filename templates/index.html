@@ -149,7 +149,13 @@
         </div>
 
         <ul class="tally" aria-label="현재 참석 집계">
-          <li><strong>{{ stats.attend }}</strong><span>참석</span></li>
+          <li><strong>{{ stats.attend }}</strong><span>전체 참석</span></li>
+          {% for row in stats.by_year %}
+          <li><strong>{{ row.people }}</strong><span>{{ row.label }}</span></li>
+          {% endfor %}
+          {% if stats.other %}
+          <li><strong>{{ stats.other }}</strong><span>기타</span></li>
+          {% endif %}
         </ul>
 
         {% if flash %}

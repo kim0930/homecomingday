@@ -30,7 +30,13 @@
     </form>
     {% else %}
     <section class="admin-stats" aria-label="집계">
-      <p><strong>{{ stats.attend }}</strong> 참석</p>
+      <p><strong>{{ stats.attend }}</strong> 전체 참석</p>
+      {% for row in stats.by_year %}
+      <p><strong>{{ row.people }}</strong> {{ row.label }}</p>
+      {% endfor %}
+      {% if stats.other %}
+      <p><strong>{{ stats.other }}</strong> 기타</p>
+      {% endif %}
     </section>
 
     {% if by_affiliation %}

@@ -396,7 +396,7 @@ h1 {
 
 .tally {
   display: grid;
-  grid-template-columns: minmax(140px, 220px);
+  grid-template-columns: repeat(auto-fit, minmax(100px, 120px));
   gap: 10px;
   justify-content: center;
   margin: 0 0 18px;

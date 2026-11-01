@@ -454,19 +454,44 @@ def list_rsvps():
     return result
 
 
+def parse_student_year(detail):
+    match = re.search(r"(\d{2})학번", detail or "")
+    return match.group(1) if match else ""
+
+
 def attendance_stats():
     with connect() as conn:
         rows = conn.execute(
             "SELECT attendance, COUNT(*) FROM rsvps GROUP BY attendance"
         ).fetchall()
+        details = conn.execute(
+            "SELECT detail FROM rsvps WHERE attendance = 'attend'"
+        ).fetchall()
     counts = {row[0]: row[1] for row in rows}
     attend = counts.get("attend", 0)
     decline = counts.get("decline", 0)
+
+    year_counts = {}
+    other = 0
+    for (detail,) in details:
+        year = parse_student_year(detail)
+        if year in STUDENT_YEARS:
+            year_counts[year] = year_counts.get(year, 0) + 1
+        else:
+            other += 1
+
+    by_year = [
+        {"year": year, "label": STUDENT_YEARS[year], "people": year_counts[year]}
+        for year in STUDENT_YEARS
+        if year in year_counts
+    ]
     return {
         "attend": attend,
         "decline": decline,
         "headcount": attend,
         "total": attend + decline,
+        "by_year": by_year,
+        "other": other,
     }
 
 
