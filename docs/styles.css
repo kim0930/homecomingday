@@ -413,10 +413,12 @@ h1 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
+  width: 100%;
 }
 
 .tally-tab {
   margin: 0;
+  width: 100%;
   padding: 10px 8px;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -470,15 +472,19 @@ h1 {
 
 .tally-years {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
   gap: 10px;
   align-content: start;
+  width: 100%;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .tally-years li {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
   padding: 12px 8px;
   background: var(--paper-2);
   text-align: center;
