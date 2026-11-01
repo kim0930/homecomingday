@@ -33,11 +33,35 @@
   function post(body) {
     return fetch(apiUrl, {
       method: "POST",
+      redirect: "follow",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(body),
     }).then(function (res) {
       return res.json();
     });
+  }
+
+  function getAdmin(passwordValue) {
+    var url =
+      apiUrl +
+      (apiUrl.indexOf("?") >= 0 ? "&" : "?") +
+      "action=admin_ping&password=" +
+      encodeURIComponent(passwordValue || "");
+    return fetch(url, { method: "GET", redirect: "follow" }).then(function (res) {
+      return res.json();
+    });
+  }
+
+  function apiOutdatedMessage(error) {
+    var text = String(error || "");
+    if (
+      text.indexOf("개인정보") >= 0 ||
+      text.indexOf("참석 여부") >= 0 ||
+      text.indexOf("이름을 입력") >= 0
+    ) {
+      return "서버 API가 예전 버전입니다. 스프레드시트 Apps Script에 Code.gs를 붙여 넣고 ‘배포 → 새 버전 관리’로 다시 배포해 주세요.";
+    }
+    return text || "요청에 실패했습니다.";
   }
 
   function show(el, text) {
@@ -218,15 +242,38 @@
   function login() {
     if (!ensureApi()) return;
     var value = document.getElementById("admin-password").value;
+    if (!value) {
+      show(loginError, "비밀번호를 입력해 주세요.");
+      return;
+    }
     show(loginError, "");
-    post({ action: "admin_login", password: value })
+    getAdmin(value)
       .then(function (data) {
-        if (!data || !data.ok) {
-          show(loginError, (data && data.error) || "로그인에 실패했습니다.");
+        if (data && data.ok) {
+          password = value;
+          enterAdmin(data);
           return;
         }
-        password = value;
-        enterAdmin(data);
+        // 구버전 API는 admin_ping을 모르고 집계만 돌려줍니다.
+        if (data && typeof data.attend === "number" && data.content == null) {
+          show(
+            loginError,
+            "서버 API가 예전 버전입니다. 스프레드시트 Apps Script에 docs/sheets-api/Code.gs 전체를 붙여 넣고 ‘배포 → 새 버전 관리’로 다시 배포해 주세요."
+          );
+          return;
+        }
+        show(loginError, apiOutdatedMessage(data && data.error) || "로그인에 실패했습니다.");
+      })
+      .catch(function () {
+        // GET이 막힌 환경이면 POST admin_login으로 재시도
+        return post({ action: "admin_login", password: value }).then(function (data) {
+          if (data && data.ok) {
+            password = value;
+            enterAdmin(data);
+            return;
+          }
+          show(loginError, apiOutdatedMessage(data && data.error) || "로그인에 실패했습니다.");
+        });
       })
       .catch(function () {
         show(loginError, "네트워크 오류로 로그인하지 못했습니다. Apps Script 재배포 여부를 확인하세요.");

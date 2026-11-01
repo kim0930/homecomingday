@@ -159,6 +159,13 @@ function doPost(e) {
       });
     }
 
+    if (String(action).indexOf("admin_") === 0) {
+      return json_({
+        ok: false,
+        error: "지원하지 않는 관리자 요청입니다. Code.gs를 최신으로 다시 배포해 주세요.",
+      });
+    }
+
     var cleaned = validate_(data);
     if (cleaned.error) {
       return json_({ ok: false, error: cleaned.error, stats: stats_() });

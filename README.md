@@ -9,7 +9,7 @@
 - 참석 회신·실시간 집계·행사 안내/식순 편집은 Google 스프레드시트 + Apps Script 웹 앱으로 처리합니다.
 - 공개 페이지: https://kim0930.github.io/homecomingday/
 - 관리자: https://kim0930.github.io/homecomingday/admin.html  
-  기본 비밀번호: `ae-night-2026` (`Code.gs`의 `ADMIN_PASSWORD`)
+  비밀번호는 `Code.gs`의 `ADMIN_PASSWORD`와 동일합니다.
 
 ### 관리자에서 할 수 있는 일
 
