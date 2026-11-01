@@ -23,12 +23,14 @@
   var loginPanel = document.getElementById("login-panel");
   var adminPanel = document.getElementById("admin-panel");
   var loginError = document.getElementById("login-error");
-  var saveStatus = document.getElementById("save-status");
-  var saveError = document.getElementById("save-error");
-  var contentFields = document.getElementById("content-fields");
-  var programEditor = document.getElementById("program-editor");
-  var rsvpBody = document.getElementById("rsvp-body");
-  var adminStats = document.getElementById("admin-stats");
+
+  var saveStatus = null;
+  var saveError = null;
+  var contentFields = null;
+  var programEditor = null;
+  var rsvpBody = null;
+  var adminStats = null;
+  var panelReady = false;
 
   function post(body) {
     return fetch(apiUrl, {
@@ -76,6 +78,78 @@
       return false;
     }
     return true;
+  }
+
+  function ensurePanel() {
+    if (panelReady) return;
+    adminPanel.innerHTML =
+      '<div class="admin-actions">' +
+      '<button type="button" id="export-btn" class="button">참석 회신 엑셀 내려받기</button>' +
+      '<button type="button" id="logout-btn" class="ghost">로그아웃</button>' +
+      "</div>" +
+      '<section class="admin-stats" id="admin-stats" aria-label="집계"></section>' +
+      '<section class="admin-card">' +
+      "<h2>행사 안내</h2>" +
+      '<div class="fields admin-fields" id="content-fields"></div>' +
+      "</section>" +
+      '<section class="admin-card">' +
+      '<div class="admin-card-head">' +
+      "<h2>이날의 자리</h2>" +
+      '<button type="button" id="add-program" class="ghost">항목 추가</button>' +
+      "</div>" +
+      '<p class="form-note">비고는 줄바꿈으로 여러 줄 입력할 수 있습니다.</p>' +
+      '<div id="program-editor" class="program-editor"></div>' +
+      "</section>" +
+      '<p id="save-status" class="banner ok" hidden role="status"></p>' +
+      '<p id="save-error" class="banner warn" hidden role="alert"></p>' +
+      '<button type="button" id="save-btn">안내·식순 저장</button>' +
+      '<section class="admin-card">' +
+      "<h2>참석 회신 미리보기</h2>" +
+      '<div class="table-wrap"><table><thead><tr>' +
+      "<th>수정시각</th><th>이름</th><th>소속학과</th><th>학번</th><th>졸업연도</th>" +
+      "<th>현직장</th><th>직책</th><th>연락처</th><th>이메일</th><th>참석</th><th>메시지</th>" +
+      "</tr></thead><tbody id=\"rsvp-body\"></tbody></table></div>" +
+      "</section>";
+
+    saveStatus = document.getElementById("save-status");
+    saveError = document.getElementById("save-error");
+    contentFields = document.getElementById("content-fields");
+    programEditor = document.getElementById("program-editor");
+    rsvpBody = document.getElementById("rsvp-body");
+    adminStats = document.getElementById("admin-stats");
+
+    document.getElementById("logout-btn").addEventListener("click", logout);
+    document.getElementById("save-btn").addEventListener("click", save);
+    document.getElementById("export-btn").addEventListener("click", exportExcel);
+    document.getElementById("add-program").addEventListener("click", function () {
+      programEditor.appendChild(makeProgramRow({ title: "", remark: [] }));
+    });
+
+    panelReady = true;
+  }
+
+  function openPanel() {
+    ensurePanel();
+    loginPanel.hidden = true;
+    adminPanel.hidden = false;
+    adminPanel.classList.add("is-open");
+    adminPanel.setAttribute("aria-hidden", "false");
+  }
+
+  function closePanel() {
+    adminPanel.classList.remove("is-open");
+    adminPanel.hidden = true;
+    adminPanel.setAttribute("aria-hidden", "true");
+    adminPanel.innerHTML = "";
+    panelReady = false;
+    saveStatus = saveError = contentFields = programEditor = rsvpBody = adminStats = null;
+    loginPanel.hidden = false;
+  }
+
+  function logout() {
+    sessionStorage.removeItem("ae_admin_password");
+    password = "";
+    closePanel();
   }
 
   function renderContentFields(content) {
@@ -153,19 +227,22 @@
   }
 
   function readProgram() {
-    return Array.prototype.slice.call(programEditor.querySelectorAll(".program-row")).map(function (row) {
-      var title = row.querySelector('[name="title"]').value.trim();
-      var remark = row
-        .querySelector('[name="remark"]')
-        .value.split(/\r?\n/)
-        .map(function (line) {
-          return line.trim();
-        })
-        .filter(Boolean);
-      return { title: title, remark: remark };
-    }).filter(function (item) {
-      return item.title;
-    });
+    return Array.prototype.slice
+      .call(programEditor.querySelectorAll(".program-row"))
+      .map(function (row) {
+        var title = row.querySelector('[name="title"]').value.trim();
+        var remark = row
+          .querySelector('[name="remark"]')
+          .value.split(/\r?\n/)
+          .map(function (line) {
+            return line.trim();
+          })
+          .filter(Boolean);
+        return { title: title, remark: remark };
+      })
+      .filter(function (item) {
+        return item.title;
+      });
   }
 
   function renderStats(stats) {
@@ -220,8 +297,7 @@
   function enterAdmin(data) {
     password = data.password || password;
     sessionStorage.setItem("ae_admin_password", password);
-    loginPanel.hidden = true;
-    adminPanel.hidden = false;
+    openPanel();
     renderContentFields(data.content || {});
     renderProgram(data.program || []);
     renderStats(data.stats || null);
@@ -254,7 +330,6 @@
           enterAdmin(data);
           return;
         }
-        // 구버전 API는 admin_ping을 모르고 집계만 돌려줍니다.
         if (data && typeof data.attend === "number" && data.content == null) {
           show(
             loginError,
@@ -265,7 +340,6 @@
         show(loginError, apiOutdatedMessage(data && data.error) || "로그인에 실패했습니다.");
       })
       .catch(function () {
-        // GET이 막힌 환경이면 POST admin_login으로 재시도
         return post({ action: "admin_login", password: value }).then(function (data) {
           if (data && data.ok) {
             password = value;
@@ -281,6 +355,7 @@
   }
 
   function save() {
+    if (!password || !panelReady) return;
     show(saveStatus, "");
     show(saveError, "");
     post({
@@ -304,6 +379,7 @@
   }
 
   function exportExcel() {
+    if (!password || !panelReady) return;
     show(saveError, "");
     post({ action: "admin_list", password: password })
       .then(function (data) {
@@ -362,20 +438,9 @@
   document.getElementById("admin-password").addEventListener("keydown", function (event) {
     if (event.key === "Enter") login();
   });
-  document.getElementById("logout-btn").addEventListener("click", function () {
-    sessionStorage.removeItem("ae_admin_password");
-    password = "";
-    adminPanel.hidden = true;
-    loginPanel.hidden = false;
-  });
-  document.getElementById("save-btn").addEventListener("click", save);
-  document.getElementById("export-btn").addEventListener("click", exportExcel);
-  document.getElementById("add-program").addEventListener("click", function () {
-    programEditor.appendChild(makeProgramRow({ title: "", remark: [] }));
-  });
 
   if (password && apiUrl) {
-    post({ action: "admin_login", password: password })
+    getAdmin(password)
       .then(function (data) {
         if (data && data.ok) enterAdmin(data);
         else sessionStorage.removeItem("ae_admin_password");

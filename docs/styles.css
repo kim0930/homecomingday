@@ -700,6 +700,17 @@ button:hover,
   margin: 32px auto 64px;
 }
 
+/* 로그인 전에는 관리 패널·내부 UI를 강제로 숨김 */
+#admin-panel,
+#admin-panel[hidden],
+.admin [hidden] {
+  display: none !important;
+}
+
+#admin-panel.is-open {
+  display: block !important;
+}
+
 .admin-head,
 .admin-actions {
   display: flex;

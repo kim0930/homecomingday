@@ -28,56 +28,7 @@
       <button type="button" id="login-btn">로그인</button>
     </section>
 
-    <section id="admin-panel" hidden>
-      <div class="admin-actions">
-        <button type="button" id="export-btn" class="button">참석 회신 엑셀 내려받기</button>
-        <button type="button" id="logout-btn" class="ghost">로그아웃</button>
-      </div>
-
-      <section class="admin-stats" id="admin-stats" aria-label="집계"></section>
-
-      <section class="admin-card">
-        <h2>행사 안내</h2>
-        <div class="fields admin-fields" id="content-fields"></div>
-      </section>
-
-      <section class="admin-card">
-        <div class="admin-card-head">
-          <h2>이날의 자리</h2>
-          <button type="button" id="add-program" class="ghost">항목 추가</button>
-        </div>
-        <p class="form-note">비고는 줄바꿈으로 여러 줄 입력할 수 있습니다.</p>
-        <div id="program-editor" class="program-editor"></div>
-      </section>
-
-      <p id="save-status" class="banner ok" hidden role="status"></p>
-      <p id="save-error" class="banner warn" hidden role="alert"></p>
-      <button type="button" id="save-btn">안내·식순 저장</button>
-
-      <section class="admin-card">
-        <h2>참석 회신 미리보기</h2>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>수정시각</th>
-                <th>이름</th>
-                <th>소속학과</th>
-                <th>학번</th>
-                <th>졸업연도</th>
-                <th>현직장</th>
-                <th>직책</th>
-                <th>연락처</th>
-                <th>이메일</th>
-                <th>참석</th>
-                <th>메시지</th>
-              </tr>
-            </thead>
-            <tbody id="rsvp-body"></tbody>
-          </table>
-        </div>
-      </section>
-    </section>
+    <section id="admin-panel" hidden aria-hidden="true"></section>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
