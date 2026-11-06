@@ -114,6 +114,9 @@ function doGet(e) {
     if (action === "content") {
       return json_({ ok: true, content: getContent_(), program: getProgram_() });
     }
+    if (action === "checkin") {
+      return json_(checkin_(param_(e, "phone")));
+    }
     if (action === "export") {
       if (!checkPassword_(param_(e, "password"))) {
         return json_({ ok: false, error: "비밀번호가 맞지 않습니다." });

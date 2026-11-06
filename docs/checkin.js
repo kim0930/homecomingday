@@ -43,6 +43,18 @@
     });
   }
 
+  function friendlyError(error) {
+    var text = String(error || "");
+    if (
+      text.indexOf("개인정보") >= 0 ||
+      text.indexOf("참석 여부") >= 0 ||
+      text.indexOf("이름을 입력") >= 0
+    ) {
+      return "서버 API가 예전 버전입니다. 스프레드시트 Apps Script에 docs/sheets-api/Code.gs 전체를 붙여 넣고 ‘배포 → 새 버전 관리’로 다시 배포해 주세요.";
+    }
+    return text || "출석 확인에 실패했습니다.";
+  }
+
   function showResult(data) {
     formPanel.hidden = true;
     resultPanel.hidden = false;
@@ -84,12 +96,30 @@
     }
     btn.disabled = true;
     btn.textContent = "확인 중…";
-    post({ action: "checkin", phone: phone })
+    var getUrl =
+      apiUrl +
+      (apiUrl.indexOf("?") >= 0 ? "&" : "?") +
+      "action=checkin&phone=" +
+      encodeURIComponent(phone);
+    fetch(getUrl, { method: "GET", redirect: "follow" })
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        // 구버전은 checkin을 모르고 집계 JSON만 돌립니다.
+        if (data && typeof data.attend === "number" && data.checked_in_at == null && data.name == null) {
+          throw new Error("outdated");
+        }
+        return data;
+      })
+      .catch(function () {
+        return post({ action: "checkin", phone: phone });
+      })
       .then(function (data) {
         btn.disabled = false;
         btn.textContent = "출석 확인";
         if (!data || !data.ok) {
-          show(errorEl, (data && data.error) || "출석 확인에 실패했습니다.");
+          show(errorEl, friendlyError(data && data.error));
           return;
         }
         showResult(data);
@@ -97,7 +127,10 @@
       .catch(function () {
         btn.disabled = false;
         btn.textContent = "출석 확인";
-        show(errorEl, "네트워크 오류입니다. Apps Script 재배포 여부를 확인해 주세요.");
+        show(
+          errorEl,
+          "서버 API가 예전 버전입니다. 스프레드시트 Apps Script에 docs/sheets-api/Code.gs 전체를 붙여 넣고 ‘배포 → 새 버전 관리’로 다시 배포해 주세요."
+        );
       });
   }
 
