@@ -4,6 +4,7 @@
  * - 참석 회신 / 집계
  * - 행사 안내·식순 콘텐츠
  * - 관리자 저장·명단 내보내기
+ * - 행사 당일 QR 출석(체크인)
  *
  * 배포 후 docs/rsvp-config.js 의 API_URL 에 웹 앱 URL 을 넣으세요.
  * Code.gs 를 수정하면 반드시 새 버전으로 다시 배포하세요.
@@ -47,7 +48,26 @@ var HEADERS = [
   "동의",
   "phone_key",
   "attendance_key",
+  "체크인시각",
 ];
+
+var COL = {
+  updated_at: 0,
+  name: 1,
+  affiliation: 2,
+  student_year: 3,
+  grad_year: 4,
+  workplace: 5,
+  title: 6,
+  phone: 7,
+  email: 8,
+  attendance: 9,
+  message: 10,
+  consent: 11,
+  phone_key: 12,
+  attendance_key: 13,
+  checked_in_at: 14,
+};
 
 var DEFAULT_CONTENT = {
   date: "2026년 11월 11일(수)",
@@ -159,6 +179,10 @@ function doPost(e) {
       });
     }
 
+    if (action === "checkin") {
+      return json_(checkin_(data.phone));
+    }
+
     if (String(action).indexOf("admin_") === 0) {
       return json_({
         ok: false,
@@ -205,8 +229,29 @@ function sheet_() {
   }
   if (sheet.getLastRow() === 0) {
     sheet.appendRow(HEADERS);
+  } else {
+    ensureRsvpHeaders_(sheet);
   }
   return sheet;
+}
+
+function ensureRsvpHeaders_(sheet) {
+  var width = Math.max(sheet.getLastColumn(), 1);
+  if (width < HEADERS.length) {
+    sheet.getRange(1, HEADERS.length).setValue(HEADERS[HEADERS.length - 1]);
+  } else {
+    var header = String(sheet.getRange(1, HEADERS.length).getValue() || "");
+    if (header !== HEADERS[HEADERS.length - 1]) {
+      sheet.getRange(1, HEADERS.length).setValue(HEADERS[HEADERS.length - 1]);
+    }
+  }
+}
+
+function cellText_(value) {
+  if (Object.prototype.toString.call(value) === "[object Date]" && !isNaN(value.getTime())) {
+    return Utilities.formatDate(value, "Asia/Seoul", "yyyy-MM-dd HH:mm");
+  }
+  return String(value == null ? "" : value).trim();
 }
 
 function contentSheet_() {
@@ -366,21 +411,64 @@ function listRsvps_() {
   var rows = [];
   for (var i = 1; i < values.length; i++) {
     rows.push({
-      updated_at: String(values[i][0] || ""),
-      name: String(values[i][1] || ""),
-      affiliation: String(values[i][2] || ""),
-      student_year: String(values[i][3] || ""),
-      grad_year: String(values[i][4] || ""),
-      workplace: String(values[i][5] || ""),
-      title: String(values[i][6] || ""),
-      phone: String(values[i][7] || ""),
-      email: String(values[i][8] || ""),
-      attendance: String(values[i][9] || ""),
-      message: String(values[i][10] || ""),
-      consent: String(values[i][11] || ""),
+      updated_at: cellText_(values[i][COL.updated_at]),
+      name: String(values[i][COL.name] || ""),
+      affiliation: String(values[i][COL.affiliation] || ""),
+      student_year: String(values[i][COL.student_year] || ""),
+      grad_year: String(values[i][COL.grad_year] || ""),
+      workplace: String(values[i][COL.workplace] || ""),
+      title: String(values[i][COL.title] || ""),
+      phone: String(values[i][COL.phone] || ""),
+      email: String(values[i][COL.email] || ""),
+      attendance: String(values[i][COL.attendance] || ""),
+      message: String(values[i][COL.message] || ""),
+      consent: String(values[i][COL.consent] || ""),
+      checked_in_at: cellText_(values[i][COL.checked_in_at]),
     });
   }
   return rows;
+}
+
+function checkin_(phoneRaw) {
+  var phoneKey = digits_(phoneRaw);
+  if (!/^0\d{8,10}$/.test(phoneKey)) {
+    return { ok: false, error: "회신에 사용한 연락처를 숫자로 입력해 주세요." };
+  }
+  var sheet = sheet_();
+  var values = sheet.getDataRange().getValues();
+  for (var i = 1; i < values.length; i++) {
+    if (String(values[i][COL.phone_key] || "") !== phoneKey) continue;
+    var name = String(values[i][COL.name] || "");
+    var affiliation = String(values[i][COL.affiliation] || "");
+    var attendance = String(values[i][COL.attendance] || "");
+    var existing = cellText_(values[i][COL.checked_in_at]);
+    if (existing) {
+      return {
+        ok: true,
+        already: true,
+        name: name,
+        affiliation: affiliation,
+        attendance: attendance,
+        checked_in_at: existing,
+        stats: stats_(),
+      };
+    }
+    var stamp = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm");
+    sheet.getRange(i + 1, COL.checked_in_at + 1).setValue(stamp);
+    return {
+      ok: true,
+      already: false,
+      name: name,
+      affiliation: affiliation,
+      attendance: attendance,
+      checked_in_at: stamp,
+      stats: stats_(),
+    };
+  }
+  return {
+    ok: false,
+    error: "사전 등록된 연락처가 없습니다. 현장 스태프에게 문의해 주세요.",
+  };
 }
 
 function deptKey_(label) {
@@ -407,11 +495,13 @@ function stats_() {
   var other = 0;
   var deptCounts = { ae: 0, me: 0, sc: 0, other: 0 };
   var statusCounts = { student: 0, alumni: 0, other: 0 };
+  var checkedIn = 0;
   for (var i = 1; i < values.length; i++) {
-    var key = String(values[i][13] || "");
+    var key = String(values[i][COL.attendance_key] || "");
+    if (cellText_(values[i][COL.checked_in_at])) checkedIn++;
     if (key === "attend") {
       attend++;
-      var yearLabel = String(values[i][3] || "");
+      var yearLabel = String(values[i][COL.student_year] || "");
       var match = yearLabel.match(/(\d{2})학번/);
       if (match) {
         var year = match[1];
@@ -419,7 +509,7 @@ function stats_() {
       } else {
         other++;
       }
-      var affiliation = String(values[i][2] || "");
+      var affiliation = String(values[i][COL.affiliation] || "");
       var dept = deptKey_(affiliation);
       deptCounts[dept] = (deptCounts[dept] || 0) + 1;
       var status = statusKey_(affiliation);
@@ -454,6 +544,7 @@ function stats_() {
     attend: attend,
     decline: decline,
     total: attend + decline,
+    checked_in: checkedIn,
     by_year: byYear,
     other: other,
     by_dept: byDept,
@@ -549,7 +640,32 @@ function upsert_(row) {
   var sheet = sheet_();
   var values = sheet.getDataRange().getValues();
   var stamp = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm");
-  var line = [
+  for (var i = 1; i < values.length; i++) {
+    if (String(values[i][COL.phone_key] || "") === row.phone_key) {
+      var checkedIn = cellText_(values[i][COL.checked_in_at]);
+      var line = [
+        stamp,
+        row.name,
+        row.affiliation_label,
+        row.student_year_label,
+        row.grad_year_label,
+        row.workplace,
+        row.title,
+        row.phone,
+        row.email,
+        row.attendance_label,
+        row.message,
+        row.consent,
+        row.phone_key,
+        row.attendance,
+        checkedIn,
+      ];
+      sheet.getRange(i + 1, 1, 1, HEADERS.length).setValues([line]);
+      row.updated = true;
+      return;
+    }
+  }
+  sheet.appendRow([
     stamp,
     row.name,
     row.affiliation_label,
@@ -564,15 +680,8 @@ function upsert_(row) {
     row.consent,
     row.phone_key,
     row.attendance,
-  ];
-  for (var i = 1; i < values.length; i++) {
-    if (String(values[i][12]) === row.phone_key) {
-      sheet.getRange(i + 1, 1, 1, HEADERS.length).setValues([line]);
-      row.updated = true;
-      return;
-    }
-  }
-  sheet.appendRow(line);
+    "",
+  ]);
   row.updated = false;
 }
 

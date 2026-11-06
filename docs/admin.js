@@ -85,9 +85,18 @@
     adminPanel.innerHTML =
       '<div class="admin-actions">' +
       '<button type="button" id="export-btn" class="button">참석 회신 엑셀 내려받기</button>' +
+      '<a class="button ghost" href="checkin.html" target="_blank" rel="noopener">출석 체크 페이지</a>' +
       '<button type="button" id="logout-btn" class="ghost">로그아웃</button>' +
       "</div>" +
       '<section class="admin-stats" id="admin-stats" aria-label="집계"></section>' +
+      '<section class="admin-card">' +
+      "<h2>당일 출석 QR</h2>" +
+      '<p class="form-note">행사장에 붙여 두고 참석자가 스캔하면 출석 체크 페이지로 이동합니다.</p>' +
+      '<div class="checkin-qr">' +
+      '<canvas id="checkin-qr-canvas" width="240" height="240" aria-label="출석 체크 QR 코드"></canvas>' +
+      '<p id="checkin-qr-url" class="form-note"></p>' +
+      "</div>" +
+      "</section>" +
       '<section class="admin-card">' +
       "<h2>행사 안내</h2>" +
       '<div class="fields admin-fields" id="content-fields"></div>' +
@@ -107,7 +116,7 @@
       "<h2>참석 회신 미리보기</h2>" +
       '<div class="table-wrap"><table><thead><tr>' +
       "<th>수정시각</th><th>이름</th><th>소속학과</th><th>학번</th><th>졸업연도</th>" +
-      "<th>현직장</th><th>직책</th><th>연락처</th><th>이메일</th><th>참석</th><th>메시지</th>" +
+      "<th>현직장</th><th>직책</th><th>연락처</th><th>이메일</th><th>참석</th><th>체크인</th><th>메시지</th>" +
       "</tr></thead><tbody id=\"rsvp-body\"></tbody></table></div>" +
       "</section>";
 
@@ -124,8 +133,38 @@
     document.getElementById("add-program").addEventListener("click", function () {
       programEditor.appendChild(makeProgramRow({ title: "", remark: [] }));
     });
+    renderCheckinQr();
 
     panelReady = true;
+  }
+
+  function checkinPageUrl() {
+    try {
+      return new URL("checkin.html", window.location.href).href;
+    } catch (err) {
+      return "checkin.html";
+    }
+  }
+
+  function renderCheckinQr() {
+    var canvas = document.getElementById("checkin-qr-canvas");
+    var urlEl = document.getElementById("checkin-qr-url");
+    var url = checkinPageUrl();
+    if (urlEl) urlEl.textContent = url;
+    if (!canvas) return;
+    if (typeof QRCode === "undefined") {
+      canvas.replaceWith(
+        Object.assign(document.createElement("img"), {
+          id: "checkin-qr-canvas",
+          alt: "출석 체크 QR",
+          src:
+            "https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=" +
+            encodeURIComponent(url),
+        })
+      );
+      return;
+    }
+    QRCode.toCanvas(canvas, url, { width: 240, margin: 1 }, function () {});
   }
 
   function openPanel() {
@@ -285,6 +324,10 @@
     total.className = "admin-tally-total";
     total.innerHTML = "<strong>" + (stats.attend || 0) + "</strong> 전체 참석";
     adminStats.appendChild(total);
+    var checked = document.createElement("p");
+    checked.className = "admin-tally-total";
+    checked.innerHTML = "<strong>" + (stats.checked_in || 0) + "</strong> 현장 출석";
+    adminStats.appendChild(checked);
 
     var tabs = document.createElement("div");
     tabs.className = "tally-tabs admin-tally-tabs";
@@ -322,7 +365,7 @@
     rsvpBody.innerHTML = "";
     if (!rows || !rows.length) {
       var empty = document.createElement("tr");
-      empty.innerHTML = '<td colspan="11">아직 회신이 없습니다.</td>';
+      empty.innerHTML = '<td colspan="12">아직 회신이 없습니다.</td>';
       rsvpBody.appendChild(empty);
       return;
     }
@@ -339,6 +382,7 @@
         row.phone,
         row.email,
         row.attendance,
+        row.checked_in_at,
         row.message,
       ].forEach(function (value) {
         var td = document.createElement("td");
@@ -455,6 +499,7 @@
             "연락처",
             "이메일",
             "참석여부",
+            "체크인시각",
             "메시지",
             "동의",
           ],
@@ -471,6 +516,7 @@
             row.phone || "",
             row.email || "",
             row.attendance || "",
+            row.checked_in_at || "",
             row.message || "",
             row.consent || "",
           ]);

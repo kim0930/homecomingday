@@ -202,7 +202,7 @@ def create_app():
             return redirect(url_for("admin"))
         buffer = StringIO()
         writer = csv.writer(buffer)
-        writer.writerow(["이름", "소속학과", "학번·졸업연도", "현직장", "직책", "연락처", "이메일", "참석 여부", "메시지", "최초 회신", "수정"])
+        writer.writerow(["이름", "소속학과", "학번·졸업연도", "현직장", "직책", "연락처", "이메일", "참석 여부", "체크인", "메시지", "최초 회신", "수정"])
         for row in list_rsvps():
             writer.writerow([
                 row["name"],
@@ -213,6 +213,7 @@ def create_app():
                 row["phone_display"],
                 row["email"],
                 ATTENDANCE.get(row["attendance"], row["attendance"]),
+                row.get("checked_in_at") or "",
                 row["message"],
                 row["created_at"],
                 row["updated_at"],
@@ -222,6 +223,55 @@ def create_app():
             payload,
             mimetype="text/csv; charset=utf-8",
             headers={"Content-Disposition": "attachment; filename=architectural-night-rsvp.csv"},
+        )
+
+    @app.get("/checkin")
+    def checkin_page():
+        return render_template("checkin.html", event=EVENT, result=None, error=None, phone="")
+
+    @app.post("/checkin")
+    def checkin_submit():
+        phone = digits_only(request.form.get("phone", ""))
+        if not re.fullmatch(r"0\d{8,10}", phone):
+            return render_template(
+                "checkin.html",
+                event=EVENT,
+                result=None,
+                error="회신에 사용한 연락처를 입력해 주세요.",
+                phone=request.form.get("phone", ""),
+            )
+        with connect() as conn:
+            row = conn.execute(
+                "SELECT * FROM rsvps WHERE phone = ?",
+                (phone,),
+            ).fetchone()
+            if not row:
+                return render_template(
+                    "checkin.html",
+                    event=EVENT,
+                    result=None,
+                    error="사전 등록된 연락처가 없습니다. 현장 스태프에게 문의해 주세요.",
+                    phone=format_phone(phone),
+                )
+            already = bool(row["checked_in_at"])
+            stamp = row["checked_in_at"] or now_kst()
+            if not already:
+                conn.execute(
+                    "UPDATE rsvps SET checked_in_at = ? WHERE id = ?",
+                    (stamp, row["id"]),
+                )
+        return render_template(
+            "checkin.html",
+            event=EVENT,
+            result={
+                "already": already,
+                "name": row["name"],
+                "affiliation": AFFILIATIONS.get(row["affiliation"], row["affiliation"]),
+                "attendance": ATTENDANCE.get(row["attendance"], row["attendance"]),
+                "checked_in_at": stamp,
+            },
+            error=None,
+            phone="",
         )
 
     return app
@@ -285,6 +335,8 @@ def init_db():
             conn.execute("ALTER TABLE rsvps ADD COLUMN title TEXT NOT NULL DEFAULT ''")
         if "email" not in existing:
             conn.execute("ALTER TABLE rsvps ADD COLUMN email TEXT NOT NULL DEFAULT ''")
+        if "checked_in_at" not in existing:
+            conn.execute("ALTER TABLE rsvps ADD COLUMN checked_in_at TEXT NOT NULL DEFAULT ''")
 
 
 def now_kst():
@@ -501,6 +553,9 @@ def attendance_stats():
         details = conn.execute(
             "SELECT detail, affiliation FROM rsvps WHERE attendance = 'attend'"
         ).fetchall()
+        checked_in = conn.execute(
+            "SELECT COUNT(*) FROM rsvps WHERE checked_in_at IS NOT NULL AND checked_in_at != ''"
+        ).fetchone()[0]
     counts = {row[0]: row[1] for row in rows}
     attend = counts.get("attend", 0)
     decline = counts.get("decline", 0)
@@ -544,6 +599,7 @@ def attendance_stats():
         "decline": decline,
         "headcount": attend,
         "total": attend + decline,
+        "checked_in": checked_in,
         "by_year": by_year,
         "other": other,
         "by_dept": by_dept,

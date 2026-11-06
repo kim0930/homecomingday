@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>출석 체크 · {{ event.title }}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body class="checkin-body">
+  <main class="checkin">
+    <header class="checkin-head">
+      <p class="eyebrow">SeoulTech Architectural Engineering</p>
+      <h1>출석 체크</h1>
+      <p class="checkin-lead">사전 회신에 사용한 연락처로 출석을 확인해 주세요.</p>
+    </header>
+
+    {% if result %}
+    <section class="checkin-card checkin-result">
+      <p class="checkin-status {{ 'is-already' if result.already else 'is-ok' }}">
+        {{ "이미 출석 확인되었습니다" if result.already else "출석이 확인되었습니다" }}
+      </p>
+      <p class="checkin-name">{{ result.name }}</p>
+      <p class="checkin-meta">{{ result.affiliation }} · {{ result.attendance }}</p>
+      <p class="checkin-time">체크인 {{ result.checked_in_at }}</p>
+      <a class="ghost button" href="{{ url_for('checkin_page') }}">다른 사람 출석 확인</a>
+    </section>
+    {% else %}
+    <form class="checkin-card" method="post" action="{{ url_for('checkin_submit') }}">
+      <label>
+        <span>연락처</span>
+        <input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="13" placeholder="010-0000-0000" required value="{{ phone }}">
+      </label>
+      {% if error %}<p class="banner warn" role="alert">{{ error }}</p>{% endif %}
+      <button type="submit">출석 확인</button>
+      <p class="form-note">회신하지 않은 연락처는 확인할 수 없습니다. 현장 스태프에게 문의해 주세요.</p>
+    </form>
+    {% endif %}
+
+    <p class="checkin-foot"><a href="{{ url_for('index') }}">행사 안내로 돌아가기</a></p>
+  </main>
+  <script>
+    (function () {
+      var input = document.getElementById("phone");
+      if (!input) return;
+      function formatPhone(raw) {
+        var d = String(raw || "").replace(/\D/g, "").slice(0, 11);
+        if (!d) return "";
+        if (d.length <= 3) return d;
+        if (d.length <= 7) return d.slice(0, 3) + "-" + d.slice(3);
+        return d.slice(0, 3) + "-" + d.slice(3, 7) + "-" + d.slice(7);
+      }
+      input.addEventListener("input", function () {
+        var next = formatPhone(input.value);
+        if (input.value !== next) input.value = next;
+      });
+    })();
+  </script>
+</body>
+</html>
