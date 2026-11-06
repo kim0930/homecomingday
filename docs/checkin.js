@@ -172,6 +172,5 @@
     if (event.key === "Enter") submit();
   });
   btn.addEventListener("click", submit);
-  document.getElementById("checkin-again").addEventListener("click", reset);
   phoneInput.focus();
 })();
