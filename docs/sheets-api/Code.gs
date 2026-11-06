@@ -433,14 +433,14 @@ function listRsvps_() {
 }
 
 function checkin_(phoneRaw) {
-  var phoneKey = digits_(phoneRaw);
+  var phoneKey = normalizePhoneKey_(phoneRaw);
   if (!/^0\d{8,10}$/.test(phoneKey)) {
     return { ok: false, error: "회신에 사용한 연락처를 숫자로 입력해 주세요." };
   }
   var sheet = sheet_();
   var values = sheet.getDataRange().getValues();
   for (var i = 1; i < values.length; i++) {
-    if (String(values[i][COL.phone_key] || "") !== phoneKey) continue;
+    if (rowPhoneKey_(values[i]) !== phoneKey) continue;
     var name = String(values[i][COL.name] || "");
     var affiliation = String(values[i][COL.affiliation] || "");
     var attendance = String(values[i][COL.attendance] || "");
@@ -458,6 +458,11 @@ function checkin_(phoneRaw) {
     }
     var stamp = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm");
     sheet.getRange(i + 1, COL.checked_in_at + 1).setValue(stamp);
+    // phone_key가 비어 있거나 선행 0이 빠진 경우 보정
+    if (rowPhoneKey_(values[i]) === phoneKey) {
+      sheet.getRange(i + 1, COL.phone_key + 1).setNumberFormat("@");
+      sheet.getRange(i + 1, COL.phone_key + 1).setValue(phoneKey);
+    }
     return {
       ok: true,
       already: false,
@@ -566,7 +571,29 @@ function cohortSortKey_(year) {
 }
 
 function digits_(value) {
-  return String(value || "").replace(/\D/g, "");
+  // 시트가 숫자를 저장하면 앞자리 0이 사라질 수 있어 복구합니다.
+  if (typeof value === "number" && isFinite(value)) {
+    var asInt = String(Math.floor(Math.abs(value)));
+    if (/^10\d{8}$/.test(asInt) || /^10\d{9}$/.test(asInt)) return "0" + asInt;
+    return asInt;
+  }
+  return String(value == null ? "" : value).replace(/\D/g, "");
+}
+
+function normalizePhoneKey_(value) {
+  var key = digits_(value);
+  if (/^0\d{8,10}$/.test(key)) return key;
+  // 010/011 등이 숫자로 저장되며 선행 0이 빠진 경우
+  if (/^1[016789]\d{7,8}$/.test(key)) return "0" + key;
+  return key;
+}
+
+function rowPhoneKey_(row) {
+  var fromKey = normalizePhoneKey_(row[COL.phone_key]);
+  if (/^0\d{8,10}$/.test(fromKey)) return fromKey;
+  var fromPhone = normalizePhoneKey_(row[COL.phone]);
+  if (/^0\d{8,10}$/.test(fromPhone)) return fromPhone;
+  return fromKey || fromPhone;
 }
 
 function formatPhone_(digits) {
@@ -599,7 +626,7 @@ function validate_(data) {
   if (!/^\d{2}$/.test(studentYear)) {
     return { error: "학번을 선택해 주세요." };
   }
-  var phoneKey = digits_(data.phone);
+  var phoneKey = normalizePhoneKey_(data.phone);
   if (!/^0\d{8,10}$/.test(phoneKey)) {
     return { error: "연락처를 숫자로 입력해 주세요." };
   }
@@ -644,7 +671,7 @@ function upsert_(row) {
   var values = sheet.getDataRange().getValues();
   var stamp = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm");
   for (var i = 1; i < values.length; i++) {
-    if (String(values[i][COL.phone_key] || "") === row.phone_key) {
+    if (rowPhoneKey_(values[i]) === row.phone_key) {
       var checkedIn = cellText_(values[i][COL.checked_in_at]);
       var line = [
         stamp,
