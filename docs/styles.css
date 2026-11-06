@@ -803,6 +803,16 @@ button:hover,
   font-size: 14px;
 }
 
+.checkin-register {
+  display: grid;
+  gap: 8px;
+}
+
+.checkin-register .button {
+  text-align: center;
+  text-decoration: none;
+}
+
 .checkin-foot {
   margin: 22px 0 0;
   text-align: center;

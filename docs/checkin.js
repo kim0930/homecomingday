@@ -3,6 +3,8 @@
   var apiUrl = (config.API_URL || "").trim();
   var phoneInput = document.getElementById("checkin-phone");
   var errorEl = document.getElementById("checkin-error");
+  var registerBox = document.getElementById("checkin-register");
+  var registerLink = document.getElementById("checkin-register-link");
   var formPanel = document.getElementById("checkin-form-panel");
   var resultPanel = document.getElementById("checkin-result");
   var btn = document.getElementById("checkin-btn");
@@ -11,6 +13,20 @@
     if (!el) return;
     el.hidden = !text;
     el.textContent = text || "";
+  }
+
+  function hideRegister() {
+    if (registerBox) registerBox.hidden = true;
+  }
+
+  function showRegister(phone) {
+    if (!registerBox || !registerLink) return;
+    var formatted = formatPhone(phone || phoneInput.value);
+    var href = "index.html?from=checkin";
+    if (formatted) href += "&phone=" + encodeURIComponent(formatted);
+    href += "#reply";
+    registerLink.href = href;
+    registerBox.hidden = false;
   }
 
   function digits(value) {
@@ -78,12 +94,24 @@
     resultPanel.hidden = true;
     formPanel.hidden = false;
     show(errorEl, "");
+    hideRegister();
     phoneInput.value = "";
     phoneInput.focus();
   }
 
+  function handleFailure(error, phone) {
+    var message = friendlyError(error);
+    show(errorEl, message);
+    if (String(error || "").indexOf("사전 등록") >= 0 || String(message).indexOf("사전 등록") >= 0) {
+      showRegister(phone);
+    } else {
+      hideRegister();
+    }
+  }
+
   function submit() {
     show(errorEl, "");
+    hideRegister();
     if (!apiUrl) {
       show(errorEl, "API_URL이 설정되지 않았습니다.");
       return;
@@ -119,9 +147,10 @@
         btn.disabled = false;
         btn.textContent = "출석 확인";
         if (!data || !data.ok) {
-          show(errorEl, friendlyError(data && data.error));
+          handleFailure(data && data.error, phone);
           return;
         }
+        hideRegister();
         showResult(data);
       })
       .catch(function () {
@@ -131,6 +160,7 @@
           errorEl,
           "서버 API가 예전 버전입니다. 스프레드시트 Apps Script에 docs/sheets-api/Code.gs 전체를 붙여 넣고 ‘배포 → 새 버전 관리’로 다시 배포해 주세요."
         );
+        hideRegister();
       });
   }
 

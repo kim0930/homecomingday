@@ -178,6 +178,24 @@
     };
   }
 
+  // 출석 체크에서 넘어온 경우 연락처를 미리 채웁니다.
+  if (form) {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var presetPhone = params.get("phone");
+      if (presetPhone) {
+        var phoneField = form.querySelector('[name="phone"]');
+        if (phoneField && !phoneField.value) phoneField.value = presetPhone;
+      }
+      if (params.get("from") === "checkin" && window.location.hash === "#reply") {
+        var reply = document.getElementById("reply");
+        if (reply) reply.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    } catch (err) {
+      /* ignore */
+    }
+  }
+
   if (form) {
     form.addEventListener("submit", function (event) {
       event.preventDefault();
@@ -215,7 +233,21 @@
           var status = data.attendance || "회신";
           var text = status + "으로 회신했습니다. 확인해 주셔서 감사합니다.";
           if (data.updated) text += " 같은 연락처의 이전 응답을 수정했습니다.";
-          showOk(text);
+          try {
+            if (new URLSearchParams(window.location.search).get("from") === "checkin") {
+              text += " 이제 출석 체크로 돌아가 같은 연락처로 확인해 주세요.";
+              showOk(text);
+              var back = document.createElement("p");
+              back.className = "form-note";
+              back.innerHTML = '<a class="button" href="checkin.html">출석 체크로 돌아가기</a>';
+              var okBanner = document.querySelector(".reply-card .banner.ok");
+              if (okBanner) okBanner.insertAdjacentElement("afterend", back);
+            } else {
+              showOk(text);
+            }
+          } catch (err) {
+            showOk(text);
+          }
           form.reset();
           var phone = document.getElementById("phone");
           if (phone) phone.dispatchEvent(new Event("input"));
