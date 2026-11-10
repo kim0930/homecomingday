@@ -504,46 +504,17 @@ h1 {
   text-align: center;
 }
 
-.tally-total .tally-figure,
-.tally-years .tally-figure,
-.table-status-card .tally-figure {
-  display: inline-flex;
-  align-items: baseline;
+/* 참석 회신: 단일 숫자 */
+.tally-total > strong {
+  display: block;
   font-family: "Noto Serif KR", serif;
+  font-size: clamp(48px, 7vw, 64px);
   font-weight: 700;
   color: var(--navy);
   line-height: 1;
 }
 
-.tally-total .tally-figure {
-  font-size: clamp(48px, 7vw, 64px);
-}
-
-.tally-years .tally-figure {
-  display: inline-flex;
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.table-status-card .tally-figure {
-  font-size: 28px;
-  font-weight: 600;
-}
-
-.tally-subcount {
-  display: inline;
-  margin: 0;
-  padding-left: 0.08em;
-  font-style: normal;
-  font-family: "Noto Serif KR", serif;
-  font-size: 0.5em;
-  font-weight: 600;
-  color: var(--muted);
-  line-height: 1;
-  vertical-align: baseline;
-}
-
-.tally-total > span:last-child {
+.tally-total > span {
   display: block;
   margin-top: 8px;
   color: var(--navy);
@@ -570,6 +541,61 @@ h1 {
   background: var(--paper-2);
   text-align: center;
   border-radius: 12px;
+}
+
+.tally-years > li > strong {
+  display: block;
+  font-family: "Noto Serif KR", serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1.1;
+}
+
+.tally-years > li > span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* 출석 현황: 출석/회신 비율 */
+.tally-total .tally-figure,
+.tally-years .tally-figure,
+.table-status-card .tally-figure {
+  display: inline-flex;
+  align-items: baseline;
+  font-family: "Noto Serif KR", serif;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1;
+}
+
+.tally-total .tally-figure {
+  font-size: clamp(48px, 7vw, 64px);
+}
+
+.tally-years .tally-figure {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.table-status-card .tally-figure {
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.tally-subcount {
+  display: inline;
+  margin: 0;
+  padding-left: 0.08em;
+  font-style: normal;
+  font-family: "Noto Serif KR", serif;
+  font-size: 0.5em;
+  font-weight: 600;
+  color: var(--muted);
+  line-height: 1;
+  vertical-align: baseline;
 }
 
 .tally-years .tally-main {
