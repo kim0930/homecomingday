@@ -54,8 +54,6 @@
       <div class="tabs" role="tablist" aria-label="안내 구분">
         <button type="button" class="tab is-active" role="tab" id="tab-info" aria-controls="panel-info" aria-selected="true" data-tab="info">행사 안내</button>
         <button type="button" class="tab" role="tab" id="tab-program" aria-controls="panel-program" aria-selected="false" data-tab="program" tabindex="-1">이날의 자리</button>
-        <button type="button" class="tab" role="tab" id="tab-checkin" aria-controls="panel-checkin" aria-selected="false" data-tab="checkin" tabindex="-1">출석자 현황</button>
-        <button type="button" class="tab" role="tab" id="tab-tables" aria-controls="panel-tables" aria-selected="false" data-tab="tables" tabindex="-1">테이블별 출석</button>
       </div>
 
       <div class="tab-panels">
@@ -140,101 +138,62 @@
             {% endfor %}
           </ol>
         </div>
-
-        <div class="tab-panel" role="tabpanel" id="panel-checkin" aria-labelledby="tab-checkin" hidden>
-          <div class="tally-board presence-board" id="checkin-tally" aria-label="현장 출석 집계"
-               data-checked="{{ stats.checked_in }}"
-               data-checked-other="{{ stats.checked_other }}"
-               data-checked-by-year='{{ stats.checked_by_year|tojson }}'
-               data-checked-by-dept='{{ stats.checked_by_dept|tojson }}'
-               data-checked-by-status='{{ stats.checked_by_status|tojson }}'
-               data-by-table='{{ stats.by_table|tojson }}'>
-            <div class="tally-total">
-              <strong id="checked-count">{{ stats.checked_in }}</strong>
-              <span>현장 출석</span>
-            </div>
-            <div class="tally-side">
-              <div class="tally-tabs" role="tablist" aria-label="출석자 통계 구분">
-                <button type="button" class="tally-tab is-active" role="tab" aria-selected="true" data-presence="year">학번별</button>
-                <button type="button" class="tally-tab" role="tab" aria-selected="false" data-presence="dept">소속학과별</button>
-                <button type="button" class="tally-tab" role="tab" aria-selected="false" data-presence="status">재학생·졸업생</button>
-              </div>
-              <ul class="tally-years" id="checked-breakdown">
-                {% for row in stats.checked_by_year %}
-                <li><strong>{{ row.people }}</strong><span>{{ row.label }}</span></li>
-                {% endfor %}
-                {% if stats.checked_other %}
-                <li><strong>{{ stats.checked_other }}</strong><span>기타</span></li>
-                {% endif %}
-              </ul>
-            </div>
-          </div>
-          <p class="panel-note">QR 출석 체크를 완료한 인원 기준입니다.</p>
-        </div>
-
-        <div class="tab-panel" role="tabpanel" id="panel-tables" aria-labelledby="tab-tables" hidden>
-          <div class="table-status" id="table-status" aria-label="테이블별 출석 현황">
-            {% for row in stats.by_table %}
-            <div class="table-status-card{% if row.assigned and row.checked_in >= row.assigned %} is-full{% endif %}">
-              <strong>{{ row.table }}</strong>
-              <div class="table-label">번 테이블</div>
-              <div class="table-count">{{ row.checked_in }} / {{ row.assigned }}명</div>
-            </div>
-            {% else %}
-            <p class="panel-note">아직 테이블 배정·출석 데이터가 없습니다.</p>
-            {% endfor %}
-          </div>
-          <p class="panel-note">각 테이블의 배정 인원 대비 현장 출석 수입니다.</p>
-        </div>
       </div>
     </section>
 
     <section class="reply" id="reply" aria-labelledby="reply-title">
       <div class="reply-card">
         <div class="section-head">
-          <h2 id="reply-title">참석 회신</h2>
-          <p>참석 여부를 선택한 뒤 보내 주세요.</p>
+          <h2 id="reply-title">참석 · 출석</h2>
+          <p>사전 회신과 현장 출석 현황을 확인하세요.</p>
         </div>
 
-        <div class="tally-board" id="tally" aria-label="현재 참석 집계"
-             data-attend="{{ stats.attend }}"
-             data-other="{{ stats.other }}"
-             data-by-year='{{ stats.by_year|tojson }}'
-             data-by-dept='{{ stats.by_dept|tojson }}'
-             data-by-status='{{ stats.by_status|tojson }}'>
-          <div class="tally-total">
-            <strong id="attend-count">{{ stats.attend }}</strong>
-            <span>전체 참석</span>
-          </div>
-          <div class="tally-side">
-            <div class="tally-tabs" role="tablist" aria-label="참석 통계 구분">
-              <button type="button" class="tally-tab is-active" role="tab" aria-selected="true" data-tally="year">학번별</button>
-              <button type="button" class="tally-tab" role="tab" aria-selected="false" data-tally="dept">소속학과별</button>
-              <button type="button" class="tally-tab" role="tab" aria-selected="false" data-tally="status">재학생·졸업생</button>
+        <div class="tabs reply-tabs" role="tablist" aria-label="참석 구분">
+          <button type="button" class="tab is-active" role="tab" id="tab-rsvp" aria-controls="reply-panel-rsvp" aria-selected="true" data-reply-tab="rsvp">참석 회신</button>
+          <button type="button" class="tab" role="tab" id="tab-presence" aria-controls="reply-panel-presence" aria-selected="false" data-reply-tab="presence" tabindex="-1">출석 현황</button>
+        </div>
+
+        <div class="reply-panels">
+          <div class="reply-panel is-active" role="tabpanel" id="reply-panel-rsvp" aria-labelledby="tab-rsvp">
+            <div class="tally-board" id="tally" aria-label="현재 참석 집계"
+                 data-attend="{{ stats.attend }}"
+                 data-other="{{ stats.other }}"
+                 data-by-year='{{ stats.by_year|tojson }}'
+                 data-by-dept='{{ stats.by_dept|tojson }}'
+                 data-by-status='{{ stats.by_status|tojson }}'>
+              <div class="tally-total">
+                <strong id="attend-count">{{ stats.attend }}</strong>
+                <span>전체 참석</span>
+              </div>
+              <div class="tally-side">
+                <div class="tally-tabs" role="tablist" aria-label="참석 통계 구분">
+                  <button type="button" class="tally-tab is-active" role="tab" aria-selected="true" data-tally="year">학번별</button>
+                  <button type="button" class="tally-tab" role="tab" aria-selected="false" data-tally="dept">소속학과별</button>
+                  <button type="button" class="tally-tab" role="tab" aria-selected="false" data-tally="status">재학생·졸업생</button>
+                </div>
+                <ul class="tally-years" id="tally-years">
+                  {% for row in stats.by_year %}
+                  <li><strong>{{ row.people }}</strong><span>{{ row.label }}</span></li>
+                  {% endfor %}
+                  {% if stats.other %}
+                  <li><strong>{{ stats.other }}</strong><span>기타</span></li>
+                  {% endif %}
+                </ul>
+              </div>
             </div>
-            <ul class="tally-years" id="tally-years">
-              {% for row in stats.by_year %}
-              <li><strong>{{ row.people }}</strong><span>{{ row.label }}</span></li>
+
+            {% if flash %}
+            <p class="banner ok" role="status">{{ flash.text }}</p>
+            {% endif %}
+            {% if errors %}
+            <div class="banner warn" role="alert">
+              {% for error in errors %}
+              <p>{{ error }}</p>
               {% endfor %}
-              {% if stats.other %}
-              <li><strong>{{ stats.other }}</strong><span>기타</span></li>
-              {% endif %}
-            </ul>
-          </div>
-        </div>
+            </div>
+            {% endif %}
 
-        {% if flash %}
-        <p class="banner ok" role="status">{{ flash.text }}</p>
-        {% endif %}
-        {% if errors %}
-        <div class="banner warn" role="alert">
-          {% for error in errors %}
-          <p>{{ error }}</p>
-          {% endfor %}
-        </div>
-        {% endif %}
-
-        <form method="post" action="{{ url_for('rsvp') }}" novalidate>
+            <form method="post" action="{{ url_for('rsvp') }}" novalidate>
           <input type="hidden" name="csrf" value="{{ csrf }}">
           <p class="honeypot" aria-hidden="true">
             <label for="website">웹사이트</label>
@@ -312,7 +271,59 @@
           </div>
           <p class="form-note">같은 연락처로 다시 보내면 응답이 수정됩니다.</p>
           <button type="submit">회신하기</button>
-        </form>
+            </form>
+          </div>
+
+          <div class="reply-panel" role="tabpanel" id="reply-panel-presence" aria-labelledby="tab-presence" hidden
+               data-checked="{{ stats.checked_in }}"
+               data-checked-other="{{ stats.checked_other }}"
+               data-checked-by-year='{{ stats.checked_by_year|tojson }}'
+               data-checked-by-dept='{{ stats.checked_by_dept|tojson }}'
+               data-checked-by-status='{{ stats.checked_by_status|tojson }}'
+               data-by-table='{{ stats.by_table|tojson }}'>
+            <div class="tally-board presence-board" id="checkin-tally" aria-label="현장 출석 집계"
+                 data-checked="{{ stats.checked_in }}"
+                 data-checked-other="{{ stats.checked_other }}"
+                 data-checked-by-year='{{ stats.checked_by_year|tojson }}'
+                 data-checked-by-dept='{{ stats.checked_by_dept|tojson }}'
+                 data-checked-by-status='{{ stats.checked_by_status|tojson }}'>
+              <div class="tally-total">
+                <strong id="checked-count">{{ stats.checked_in }}</strong>
+                <span>현장 출석</span>
+              </div>
+              <div class="tally-side">
+                <div class="tally-tabs" role="tablist" aria-label="출석자 통계 구분">
+                  <button type="button" class="tally-tab is-active" role="tab" aria-selected="true" data-presence="year">학번별</button>
+                  <button type="button" class="tally-tab" role="tab" aria-selected="false" data-presence="dept">소속학과별</button>
+                  <button type="button" class="tally-tab" role="tab" aria-selected="false" data-presence="status">재학생·졸업생</button>
+                </div>
+                <ul class="tally-years" id="checked-breakdown">
+                  {% for row in stats.checked_by_year %}
+                  <li><strong>{{ row.people }}</strong><span>{{ row.label }}</span></li>
+                  {% endfor %}
+                  {% if stats.checked_other %}
+                  <li><strong>{{ stats.checked_other }}</strong><span>기타</span></li>
+                  {% endif %}
+                </ul>
+              </div>
+            </div>
+            <p class="panel-note">QR 출석 체크를 완료한 인원 기준입니다.</p>
+
+            <h3 class="presence-subtitle">테이블별 출석</h3>
+            <div class="table-status" id="table-status" aria-label="테이블별 출석 현황">
+              {% for row in stats.by_table %}
+              <div class="table-status-card{% if row.assigned and row.checked_in >= row.assigned %} is-full{% endif %}">
+                <strong>{{ row.table }}</strong>
+                <div class="table-label">번 테이블</div>
+                <div class="table-count">{{ row.checked_in }} / {{ row.assigned }}명</div>
+              </div>
+              {% else %}
+              <p class="panel-note">아직 테이블 배정·출석 데이터가 없습니다.</p>
+              {% endfor %}
+            </div>
+            <p class="panel-note">각 테이블의 배정 인원 대비 현장 출석 수입니다.</p>
+          </div>
+        </div>
       </div>
     </section>
   </main>
@@ -418,49 +429,53 @@
         });
       }
 
-      var tabs = Array.prototype.slice.call(document.querySelectorAll(".tab"));
-      var panels = {
-        info: document.getElementById("panel-info"),
-        program: document.getElementById("panel-program"),
-        checkin: document.getElementById("panel-checkin"),
-        tables: document.getElementById("panel-tables")
-      };
-
-      function activate(name, focusTab) {
-        tabs.forEach(function (tab) {
-          var on = tab.getAttribute("data-tab") === name;
-          tab.classList.toggle("is-active", on);
-          tab.setAttribute("aria-selected", on ? "true" : "false");
-          tab.tabIndex = on ? 0 : -1;
-          if (on && focusTab) tab.focus();
-        });
-        Object.keys(panels).forEach(function (key) {
-          var panel = panels[key];
-          if (!panel) return;
-          var on = key === name;
-          panel.classList.toggle("is-active", on);
-          panel.hidden = !on;
+      function bindTabs(root, attr, panelMap) {
+        if (!root) return;
+        var tabs = Array.prototype.slice.call(root.querySelectorAll(".tab"));
+        function activate(name, focusTab) {
+          tabs.forEach(function (tab) {
+            var on = tab.getAttribute(attr) === name;
+            tab.classList.toggle("is-active", on);
+            tab.setAttribute("aria-selected", on ? "true" : "false");
+            tab.tabIndex = on ? 0 : -1;
+            if (on && focusTab) tab.focus();
+          });
+          Object.keys(panelMap).forEach(function (key) {
+            var panel = panelMap[key];
+            if (!panel) return;
+            var on = key === name;
+            panel.classList.toggle("is-active", on);
+            panel.hidden = !on;
+          });
+        }
+        tabs.forEach(function (tab, index) {
+          tab.addEventListener("click", function () {
+            activate(tab.getAttribute(attr), false);
+          });
+          tab.addEventListener("keydown", function (event) {
+            var next = null;
+            if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+              event.preventDefault();
+              next = tabs[(index + (event.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+            } else if (event.key === "Home") {
+              event.preventDefault();
+              next = tabs[0];
+            } else if (event.key === "End") {
+              event.preventDefault();
+              next = tabs[tabs.length - 1];
+            }
+            if (next) activate(next.getAttribute(attr), true);
+          });
         });
       }
 
-      tabs.forEach(function (tab, index) {
-        tab.addEventListener("click", function () {
-          activate(tab.getAttribute("data-tab"), false);
-        });
-        tab.addEventListener("keydown", function (event) {
-          var next = null;
-          if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
-            event.preventDefault();
-            next = tabs[(index + (event.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
-          } else if (event.key === "Home") {
-            event.preventDefault();
-            next = tabs[0];
-          } else if (event.key === "End") {
-            event.preventDefault();
-            next = tabs[tabs.length - 1];
-          }
-          if (next) activate(next.getAttribute("data-tab"), true);
-        });
+      bindTabs(document.querySelector('.panel[aria-label="행사 정보"]'), "data-tab", {
+        info: document.getElementById("panel-info"),
+        program: document.getElementById("panel-program"),
+      });
+      bindTabs(document.querySelector(".reply-card"), "data-reply-tab", {
+        rsvp: document.getElementById("reply-panel-rsvp"),
+        presence: document.getElementById("reply-panel-presence"),
       });
 
       var input = document.getElementById("phone");

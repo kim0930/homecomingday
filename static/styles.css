@@ -215,20 +215,19 @@ h1 {
 
 .tabs {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: 1fr 1fr;
   border-bottom: 1px solid var(--line);
   background: var(--paper-2);
 }
 
 .tab {
   margin: 0;
-  padding: 14px 8px;
+  padding: 16px 12px;
   border: 0;
   border-radius: 0;
   background: transparent;
   color: var(--muted);
   font: inherit;
-  font-size: 14px;
   font-weight: 650;
   cursor: pointer;
 }
@@ -432,6 +431,31 @@ h1 {
   border-radius: 18px;
   box-shadow: var(--shadow);
   border-top: 3px solid var(--gold);
+}
+
+.reply-tabs {
+  margin: 0 0 18px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.reply-panels {
+  display: grid;
+  gap: 8px;
+}
+
+.reply-panel[hidden] { display: none; }
+
+.reply-panel.is-active {
+  display: block;
+  animation: fade-in 0.35s ease both;
+}
+
+.presence-subtitle {
+  margin: 28px 0 12px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy);
 }
 
 .tally-board {
@@ -1015,12 +1039,6 @@ td:nth-child(9) { white-space: normal; min-width: 160px; }
     align-items: start;
     flex-direction: column;
   }
-
-  .tabs {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .tab { font-size: 13px; padding: 12px 6px; }
 
   .tally-board {
     grid-template-columns: 1fr;
