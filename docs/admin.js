@@ -168,7 +168,7 @@
       '<label><span>졸업연도</span><select name="grad_year"></select></label>' +
       '<label><span>현직장</span><input name="workplace" maxlength="60"></label>' +
       '<label><span>직책</span><input name="title" maxlength="40"></label>' +
-      '<label><span>연락처</span><input name="phone" required placeholder="010-0000-0000"></label>' +
+      '<label><span>연락처</span><input name="phone" required inputmode="tel" autocomplete="tel" maxlength="13" placeholder="010-0000-0000"></label>' +
       '<label><span>이메일</span><input name="email" type="email" required maxlength="80"></label>' +
       '<label><span>참석 여부</span><select name="attendance" required>' +
       '<option value="attend">참석</option><option value="decline">불참</option></select></label>' +
@@ -194,6 +194,7 @@
     rsvpModalTitle = document.getElementById("rsvp-modal-title");
 
     fillRsvpSelects();
+    bindRsvpPhoneFormat();
 
     document.getElementById("logout-btn").addEventListener("click", logout);
     document.getElementById("save-btn").addEventListener("click", save);
@@ -213,6 +214,38 @@
     renderCheckinQr();
 
     panelReady = true;
+  }
+
+  function digitsOnly(value) {
+    return String(value || "").replace(/\D/g, "");
+  }
+
+  function formatPhone(raw) {
+    var d = digitsOnly(raw).slice(0, 11);
+    if (!d) return "";
+    if (d.indexOf("02") === 0) {
+      if (d.length <= 2) return d;
+      if (d.length <= 5) return d.slice(0, 2) + "-" + d.slice(2);
+      if (d.length <= 9) return d.slice(0, 2) + "-" + d.slice(2, 5) + "-" + d.slice(5);
+      return d.slice(0, 2) + "-" + d.slice(2, 6) + "-" + d.slice(6, 10);
+    }
+    if (d.length <= 3) return d;
+    if (d.length <= 7) return d.slice(0, 3) + "-" + d.slice(3);
+    if (d.length <= 10) return d.slice(0, 3) + "-" + d.slice(3, 6) + "-" + d.slice(6);
+    return d.slice(0, 3) + "-" + d.slice(3, 7) + "-" + d.slice(7);
+  }
+
+  function bindRsvpPhoneFormat() {
+    if (!rsvpForm) return;
+    var input = rsvpForm.elements.phone;
+    if (!input || input.getAttribute("data-phone-bound") === "1") return;
+    input.setAttribute("data-phone-bound", "1");
+    function applyFormat() {
+      var next = formatPhone(input.value);
+      if (input.value !== next) input.value = next;
+    }
+    input.addEventListener("input", applyFormat);
+    input.addEventListener("blur", applyFormat);
   }
 
   function fillRsvpSelects() {
@@ -283,7 +316,7 @@
       rsvpForm.elements.grad_year.value = extractGradYear(row.grad_year);
       rsvpForm.elements.workplace.value = row.workplace || "";
       rsvpForm.elements.title.value = row.title || "";
-      rsvpForm.elements.phone.value = row.phone || "";
+      rsvpForm.elements.phone.value = formatPhone(row.phone || "");
       rsvpForm.elements.email.value = row.email || "";
       rsvpForm.elements.attendance.value = attendanceKeyFromLabel(
         row.attendance_key || row.attendance
