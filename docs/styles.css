@@ -270,15 +270,6 @@ h1 {
   border: 2px solid #111;
 }
 
-.table-status-card strong {
-  display: block;
-  font-family: "Noto Serif KR", serif;
-  font-size: 28px;
-  font-weight: 600;
-  color: var(--navy);
-  line-height: 1.1;
-}
-
 .table-status-card .table-label {
   margin-top: 6px;
   color: var(--muted);
@@ -513,41 +504,46 @@ h1 {
   text-align: center;
 }
 
-.tally-total strong {
-  display: block;
+.tally-total .tally-figure,
+.tally-years .tally-figure,
+.table-status-card .tally-figure {
+  display: inline-flex;
+  align-items: baseline;
   font-family: "Noto Serif KR", serif;
-  font-size: clamp(48px, 7vw, 64px);
   font-weight: 700;
   color: var(--navy);
   line-height: 1;
 }
 
+.tally-total .tally-figure {
+  font-size: clamp(48px, 7vw, 64px);
+}
+
+.tally-years .tally-figure {
+  display: inline-flex;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.table-status-card .tally-figure {
+  font-size: 28px;
+  font-weight: 600;
+}
+
 .tally-subcount {
-  display: block;
-  margin-top: 4px;
+  display: inline;
+  margin: 0;
+  padding-left: 0.08em;
   font-style: normal;
   font-family: "Noto Serif KR", serif;
-  font-size: 13px;
+  font-size: 0.45em;
   font-weight: 600;
   color: var(--muted);
   line-height: 1;
 }
 
-.tally-total .tally-subcount {
-  margin-top: 6px;
-  font-size: 18px;
-}
-
-.tally-years .tally-subcount {
-  font-size: 12px;
-}
-
-.table-status-card .tally-subcount {
-  margin-top: 2px;
-  font-size: 13px;
-}
-
-.tally-total span {
+.tally-total > span:last-child {
+  display: block;
   margin-top: 8px;
   color: var(--navy);
   font-size: 15px;
@@ -575,16 +571,9 @@ h1 {
   border-radius: 12px;
 }
 
-.tally-years strong {
-  display: block;
-  font-family: "Noto Serif KR", serif;
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--navy);
-  line-height: 1.1;
-}
-
 .tally-years span {
+  display: block;
+  margin-top: 4px;
   color: var(--muted);
   font-size: 12px;
 }

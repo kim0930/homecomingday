@@ -16,11 +16,16 @@
     return 2000 + value;
   }
 
+  function asCount(value) {
+    var n = Number(value);
+    return isFinite(n) ? n : 0;
+  }
+
   function peopleByField(rows, field, value) {
     rows = rows || [];
     for (var i = 0; i < rows.length; i++) {
       if (!rows[i]) continue;
-      if (String(rows[i][field]) === String(value)) return rows[i].people || 0;
+      if (String(rows[i][field]) === String(value)) return asCount(rows[i].people);
     }
     return 0;
   }
@@ -28,13 +33,16 @@
   function makeItem(count, label, rsvpCount) {
     var li = document.createElement("li");
     var strong = document.createElement("strong");
-    strong.textContent = String(count == null ? 0 : count);
-    li.appendChild(strong);
+    strong.className = "tally-figure";
+    var main = document.createElement("span");
+    main.textContent = String(asCount(count));
     var sub = document.createElement("em");
     sub.className = "tally-subcount";
     sub.title = "참석 회신";
-    sub.textContent = String(rsvpCount == null ? 0 : rsvpCount);
-    li.appendChild(sub);
+    sub.textContent = "/" + String(asCount(rsvpCount));
+    strong.appendChild(main);
+    strong.appendChild(sub);
+    li.appendChild(strong);
     var span = document.createElement("span");
     span.textContent = label;
     li.appendChild(span);
@@ -45,51 +53,58 @@
     if (!checkedList) return;
     checkedList.innerHTML = "";
     if (mode === "dept") {
-      ((stats && stats.checked_by_dept) || []).forEach(function (row) {
+      ((stats && stats.by_dept) || []).forEach(function (row) {
         if (!row) return;
         if (!row.people && row.key === "other") return;
         checkedList.appendChild(
           makeItem(
-            row.people || 0,
+            peopleByField(stats.checked_by_dept, "key", row.key),
             row.label || "",
-            peopleByField(stats.by_dept, "key", row.key)
+            row.people || 0
           )
         );
       });
       return;
     }
     if (mode === "status") {
-      ((stats && stats.checked_by_status) || []).forEach(function (row) {
+      ((stats && stats.by_status) || []).forEach(function (row) {
         if (!row) return;
         if (!row.people && row.key === "other") return;
         checkedList.appendChild(
           makeItem(
-            row.people || 0,
+            peopleByField(stats.checked_by_status, "key", row.key),
             row.label || "",
-            peopleByField(stats.by_status, "key", row.key)
+            row.people || 0
           )
         );
       });
       return;
     }
-    var rows = ((stats && stats.checked_by_year) || []).slice().sort(function (a, b) {
+    var seen = {};
+    var rows = ((stats && stats.by_year) || []).slice().sort(function (a, b) {
       return cohortSortKey(a.year) - cohortSortKey(b.year);
     });
     rows.forEach(function (row) {
       if (!row || !row.people) return;
+      seen[String(row.year)] = true;
       checkedList.appendChild(
         makeItem(
-          row.people,
+          peopleByField(stats.checked_by_year, "year", row.year),
           row.label || row.year + "학번",
-          peopleByField(stats.by_year, "year", row.year)
+          row.people
         )
       );
     });
-    var other = stats && typeof stats.checked_other === "number" ? stats.checked_other : 0;
-    if (other > 0) {
+    ((stats && stats.checked_by_year) || []).forEach(function (row) {
+      if (!row || !row.people || seen[String(row.year)]) return;
       checkedList.appendChild(
-        makeItem(other, "기타", stats && typeof stats.other === "number" ? stats.other : 0)
+        makeItem(row.people, row.label || row.year + "학번", 0)
       );
+    });
+    var otherChecked = stats && typeof stats.checked_other === "number" ? stats.checked_other : 0;
+    var otherRsvp = stats && typeof stats.other === "number" ? stats.other : 0;
+    if (otherChecked > 0 || otherRsvp > 0) {
+      checkedList.appendChild(makeItem(otherChecked, "기타", otherRsvp));
     }
   }
 
@@ -117,19 +132,21 @@
     }
     rows.forEach(function (row) {
       var card = document.createElement("div");
-      var assigned = row.assigned || 0;
-      var checked = row.checked_in || 0;
+      var assigned = asCount(row.assigned);
+      var checked = asCount(row.checked_in);
       card.className = "table-status-card" + (assigned && checked >= assigned ? " is-full" : "");
 
       var strong = document.createElement("strong");
-      strong.textContent = String(checked);
-      card.appendChild(strong);
-
+      strong.className = "tally-figure";
+      var main = document.createElement("span");
+      main.textContent = String(checked);
       var sub = document.createElement("em");
       sub.className = "tally-subcount";
       sub.title = "참석 회신";
-      sub.textContent = String(assigned);
-      card.appendChild(sub);
+      sub.textContent = "/" + String(assigned);
+      strong.appendChild(main);
+      strong.appendChild(sub);
+      card.appendChild(strong);
 
       var label = document.createElement("div");
       label.className = "table-label";
@@ -143,14 +160,10 @@
   function renderPresenceStats(stats) {
     latestStats = stats || {};
     if (checkedCount) {
-      checkedCount.textContent = String(
-        typeof latestStats.checked_in === "number" ? latestStats.checked_in : 0
-      );
+      checkedCount.textContent = String(asCount(latestStats.checked_in));
     }
     if (checkedRsvpCount) {
-      checkedRsvpCount.textContent = String(
-        typeof latestStats.attend === "number" ? latestStats.attend : 0
-      );
+      checkedRsvpCount.textContent = "/" + String(asCount(latestStats.attend));
     }
     setPresenceTab(activePresence);
     renderTables(latestStats);
