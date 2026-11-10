@@ -35,6 +35,7 @@
     var strong = document.createElement("strong");
     strong.className = "tally-figure";
     var main = document.createElement("span");
+    main.className = "tally-main";
     main.textContent = String(asCount(count));
     var sub = document.createElement("em");
     sub.className = "tally-subcount";
@@ -44,6 +45,7 @@
     strong.appendChild(sub);
     li.appendChild(strong);
     var span = document.createElement("span");
+    span.className = "tally-label";
     span.textContent = label;
     li.appendChild(span);
     return li;
@@ -139,6 +141,7 @@
       var strong = document.createElement("strong");
       strong.className = "tally-figure";
       var main = document.createElement("span");
+      main.className = "tally-main";
       main.textContent = String(checked);
       var sub = document.createElement("em");
       sub.className = "tally-subcount";
