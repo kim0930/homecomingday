@@ -280,16 +280,9 @@ h1 {
 }
 
 .table-status-card .table-label {
-  margin-top: 4px;
+  margin-top: 6px;
   color: var(--muted);
   font-size: 12px;
-}
-
-.table-status-card .table-count {
-  margin-top: 8px;
-  color: var(--ink);
-  font-size: 14px;
-  font-weight: 650;
 }
 
 .info-list {
@@ -527,6 +520,31 @@ h1 {
   font-weight: 700;
   color: var(--navy);
   line-height: 1;
+}
+
+.tally-subcount {
+  display: block;
+  margin-top: 4px;
+  font-style: normal;
+  font-family: "Noto Serif KR", serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  line-height: 1;
+}
+
+.tally-total .tally-subcount {
+  margin-top: 6px;
+  font-size: 18px;
+}
+
+.tally-years .tally-subcount {
+  font-size: 12px;
+}
+
+.table-status-card .tally-subcount {
+  margin-top: 2px;
+  font-size: 13px;
 }
 
 .tally-total span {

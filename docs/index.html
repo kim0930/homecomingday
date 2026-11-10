@@ -544,6 +544,7 @@
             <div class="tally-board presence-board" id="checkin-tally" aria-label="현장 출석 집계">
               <div class="tally-total">
                 <strong id="checked-count">0</strong>
+                <em class="tally-subcount" id="checked-rsvp-count" title="참석 회신">0</em>
                 <span>현장 출석</span>
               </div>
               <div class="tally-side">
@@ -555,11 +556,11 @@
                 <ul class="tally-years" id="checked-breakdown"></ul>
               </div>
             </div>
-            <p class="panel-note">QR 출석 체크를 완료한 인원 기준입니다.</p>
+            <p class="panel-note">큰 숫자는 현장 출석, 작은 숫자는 참석 회신입니다.</p>
 
             <h3 class="presence-subtitle">테이블별 출석</h3>
             <div class="table-status" id="table-status" aria-label="테이블별 출석 현황"></div>
-            <p class="panel-note">각 테이블의 배정 인원 대비 현장 출석 수입니다.</p>
+            <p class="panel-note">큰 숫자는 현장 출석, 작은 숫자는 해당 테이블 참석 회신(배정)입니다.</p>
           </div>
         </div>
       </div>
