@@ -215,19 +215,20 @@ h1 {
 
 .tabs {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   border-bottom: 1px solid var(--line);
   background: var(--paper-2);
 }
 
 .tab {
   margin: 0;
-  padding: 16px 12px;
+  padding: 14px 8px;
   border: 0;
   border-radius: 0;
   background: transparent;
   color: var(--muted);
   font: inherit;
+  font-size: 14px;
   font-weight: 650;
   cursor: pointer;
 }
@@ -249,6 +250,45 @@ h1 {
 .tab-panel.is-active {
   display: block;
   animation: fade-in 0.35s ease both;
+}
+
+.table-status {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 10px;
+}
+
+.table-status-card {
+  padding: 14px 10px;
+  background: var(--paper-2);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.table-status-card.is-full {
+  background: #e5f2ea;
+}
+
+.table-status-card strong {
+  display: block;
+  font-family: "Noto Serif KR", serif;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1.1;
+}
+
+.table-status-card .table-label {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.table-status-card .table-count {
+  margin-top: 8px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 650;
 }
 
 .info-list {
@@ -976,6 +1016,12 @@ td:nth-child(9) { white-space: normal; min-width: 160px; }
     flex-direction: column;
   }
 
+  .tabs {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .tab { font-size: 13px; padding: 12px 6px; }
+
   .tally-board {
     grid-template-columns: 1fr;
   }
@@ -983,6 +1029,10 @@ td:nth-child(9) { white-space: normal; min-width: 160px; }
   .tally-total { min-height: 120px; }
 
   .tally-tab { font-size: 12px; padding: 9px 6px; }
+
+  .table-status {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
 
   .hero { padding-top: 28px; text-align: left; }
 

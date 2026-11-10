@@ -106,6 +106,9 @@
     var attend = latestStats && typeof latestStats.attend === "number" ? latestStats.attend : 0;
     if (attendEl) attendEl.textContent = String(attend);
     setTallyTab(activeTally);
+    if (typeof window.renderPresenceStats === "function") {
+      window.renderPresenceStats(latestStats);
+    }
   }
 
   if (tallyEl) {

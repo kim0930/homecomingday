@@ -754,38 +754,7 @@ function statusKey_(label) {
   return "other";
 }
 
-function stats_() {
-  var sheet = sheet_();
-  var values = sheet.getDataRange().getValues();
-  var attend = 0;
-  var decline = 0;
-  var yearCounts = {};
-  var other = 0;
-  var deptCounts = { ae: 0, me: 0, sc: 0, other: 0 };
-  var statusCounts = { student: 0, alumni: 0, other: 0 };
-  var checkedIn = 0;
-  for (var i = 1; i < values.length; i++) {
-    var key = String(values[i][COL.attendance_key] || "");
-    if (cellText_(values[i][COL.checked_in_at])) checkedIn++;
-    if (key === "attend") {
-      attend++;
-      var yearLabel = String(values[i][COL.student_year] || "");
-      var match = yearLabel.match(/(\d{2})학번/);
-      if (match) {
-        var year = match[1];
-        yearCounts[year] = (yearCounts[year] || 0) + 1;
-      } else {
-        other++;
-      }
-      var affiliation = String(values[i][COL.affiliation] || "");
-      var dept = deptKey_(affiliation);
-      deptCounts[dept] = (deptCounts[dept] || 0) + 1;
-      var status = statusKey_(affiliation);
-      statusCounts[status] = (statusCounts[status] || 0) + 1;
-    } else if (key === "decline") {
-      decline++;
-    }
-  }
+function buildBreakdown_(yearCounts, other, deptCounts, statusCounts) {
   var byYear = Object.keys(yearCounts)
     .sort(function (a, b) {
       return cohortSortKey_(a) - cohortSortKey_(b);
@@ -797,26 +766,118 @@ function stats_() {
         people: yearCounts[year],
       };
     });
-  var byDept = [
-    { key: "ae", label: "건축공학전공", people: deptCounts.ae },
-    { key: "me", label: "건축기계설비공학과", people: deptCounts.me },
-    { key: "sc", label: "스마트시티공학과", people: deptCounts.sc },
-    { key: "other", label: "기타", people: deptCounts.other },
-  ];
-  var byStatus = [
-    { key: "student", label: "재학생", people: statusCounts.student },
-    { key: "alumni", label: "졸업생", people: statusCounts.alumni },
-    { key: "other", label: "기타", people: statusCounts.other },
-  ];
+  return {
+    by_year: byYear,
+    other: other,
+    by_dept: [
+      { key: "ae", label: "건축공학전공", people: deptCounts.ae },
+      { key: "me", label: "건축기계설비공학과", people: deptCounts.me },
+      { key: "sc", label: "스마트시티공학과", people: deptCounts.sc },
+      { key: "other", label: "기타", people: deptCounts.other },
+    ],
+    by_status: [
+      { key: "student", label: "재학생", people: statusCounts.student },
+      { key: "alumni", label: "졸업생", people: statusCounts.alumni },
+      { key: "other", label: "기타", people: statusCounts.other },
+    ],
+  };
+}
+
+function bumpBreakdown_(yearCounts, otherRef, deptCounts, statusCounts, rowValues) {
+  var yearLabel = String(rowValues[COL.student_year] || "");
+  var match = yearLabel.match(/(\d{2})학번/);
+  if (match) {
+    var year = match[1];
+    yearCounts[year] = (yearCounts[year] || 0) + 1;
+  } else {
+    otherRef.value += 1;
+  }
+  var affiliation = String(rowValues[COL.affiliation] || "");
+  var dept = deptKey_(affiliation);
+  deptCounts[dept] = (deptCounts[dept] || 0) + 1;
+  var status = statusKey_(affiliation);
+  statusCounts[status] = (statusCounts[status] || 0) + 1;
+}
+
+function stats_() {
+  var sheet = sheet_();
+  var values = sheet.getDataRange().getValues();
+  var attend = 0;
+  var decline = 0;
+  var yearCounts = {};
+  var other = 0;
+  var deptCounts = { ae: 0, me: 0, sc: 0, other: 0 };
+  var statusCounts = { student: 0, alumni: 0, other: 0 };
+  var checkedIn = 0;
+  var checkedYearCounts = {};
+  var checkedOther = { value: 0 };
+  var checkedDeptCounts = { ae: 0, me: 0, sc: 0, other: 0 };
+  var checkedStatusCounts = { student: 0, alumni: 0, other: 0 };
+  var tableAssigned = {};
+  var tableChecked = {};
+  var rsvpOther = { value: 0 };
+
+  for (var i = 1; i < values.length; i++) {
+    var key = String(values[i][COL.attendance_key] || "");
+    var isChecked = !!cellText_(values[i][COL.checked_in_at]);
+    var tableNo = resolveTableNo_(values[i]);
+    if (tableNo) {
+      tableAssigned[tableNo] = (tableAssigned[tableNo] || 0) + 1;
+      if (isChecked) tableChecked[tableNo] = (tableChecked[tableNo] || 0) + 1;
+    }
+    if (isChecked) {
+      checkedIn++;
+      bumpBreakdown_(
+        checkedYearCounts,
+        checkedOther,
+        checkedDeptCounts,
+        checkedStatusCounts,
+        values[i]
+      );
+    }
+    if (key === "attend") {
+      attend++;
+      bumpBreakdown_(yearCounts, rsvpOther, deptCounts, statusCounts, values[i]);
+    } else if (key === "decline") {
+      decline++;
+    }
+  }
+  other = rsvpOther.value;
+
+  var rsvpBreak = buildBreakdown_(yearCounts, other, deptCounts, statusCounts);
+  var checkedBreak = buildBreakdown_(
+    checkedYearCounts,
+    checkedOther.value,
+    checkedDeptCounts,
+    checkedStatusCounts
+  );
+  var byTable = Object.keys(tableAssigned)
+    .sort(function (a, b) {
+      return (parseInt(a, 10) || 0) - (parseInt(b, 10) || 0);
+    })
+    .map(function (table) {
+      return {
+        table: table,
+        label: table + "번",
+        assigned: tableAssigned[table] || 0,
+        checked_in: tableChecked[table] || 0,
+      };
+    });
+
   return {
     attend: attend,
     decline: decline,
     total: attend + decline,
     checked_in: checkedIn,
-    by_year: byYear,
-    other: other,
-    by_dept: byDept,
-    by_status: byStatus,
+    by_year: rsvpBreak.by_year,
+    other: rsvpBreak.other,
+    by_dept: rsvpBreak.by_dept,
+    by_status: rsvpBreak.by_status,
+    checked_by_year: checkedBreak.by_year,
+    checked_other: checkedBreak.other,
+    checked_by_dept: checkedBreak.by_dept,
+    checked_by_status: checkedBreak.by_status,
+    by_table: byTable,
   };
 }
 

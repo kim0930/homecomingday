@@ -585,26 +585,12 @@ STATUS_KEYS = {
 }
 
 
-def attendance_stats():
-    with connect() as conn:
-        rows = conn.execute(
-            "SELECT attendance, COUNT(*) FROM rsvps GROUP BY attendance"
-        ).fetchall()
-        details = conn.execute(
-            "SELECT detail, affiliation FROM rsvps WHERE attendance = 'attend'"
-        ).fetchall()
-        checked_in = conn.execute(
-            "SELECT COUNT(*) FROM rsvps WHERE checked_in_at IS NOT NULL AND checked_in_at != ''"
-        ).fetchone()[0]
-    counts = {row[0]: row[1] for row in rows}
-    attend = counts.get("attend", 0)
-    decline = counts.get("decline", 0)
-
+def _breakdown_from_rows(rows):
     year_counts = {}
     other = 0
     dept_counts = {"ae": 0, "me": 0, "sc": 0, "other": 0}
     status_counts = {"student": 0, "alumni": 0, "other": 0}
-    for detail, affiliation in details:
+    for detail, affiliation in rows:
         year = parse_student_year(detail)
         if year:
             year_counts[year] = year_counts.get(year, 0) + 1
@@ -614,7 +600,6 @@ def attendance_stats():
         dept_counts[dept] = dept_counts.get(dept, 0) + 1
         status = STATUS_KEYS.get(affiliation, "other")
         status_counts[status] = status_counts.get(status, 0) + 1
-
     by_year = [
         {
             "year": year,
@@ -634,6 +619,56 @@ def attendance_stats():
         {"key": "alumni", "label": "졸업생", "people": status_counts["alumni"]},
         {"key": "other", "label": "기타", "people": status_counts["other"]},
     ]
+    return by_year, other, by_dept, by_status
+
+
+def attendance_stats():
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT attendance, COUNT(*) FROM rsvps GROUP BY attendance"
+        ).fetchall()
+        details = conn.execute(
+            "SELECT detail, affiliation FROM rsvps WHERE attendance = 'attend'"
+        ).fetchall()
+        checked_rows = conn.execute(
+            """
+            SELECT detail, affiliation, name, table_no, checked_in_at
+            FROM rsvps
+            """
+        ).fetchall()
+    counts = {row[0]: row[1] for row in rows}
+    attend = counts.get("attend", 0)
+    decline = counts.get("decline", 0)
+
+    by_year, other, by_dept, by_status = _breakdown_from_rows(details)
+
+    checked_details = []
+    table_assigned = {}
+    table_checked = {}
+    checked_in = 0
+    for detail, affiliation, name, table_no, checked_at in checked_rows:
+        table = (table_no or "").strip() or lookup_table_no(name)
+        is_checked = bool(checked_at)
+        if table:
+            table_assigned[table] = table_assigned.get(table, 0) + 1
+            if is_checked:
+                table_checked[table] = table_checked.get(table, 0) + 1
+        if is_checked:
+            checked_in += 1
+            checked_details.append((detail, affiliation))
+
+    checked_by_year, checked_other, checked_by_dept, checked_by_status = _breakdown_from_rows(
+        checked_details
+    )
+    by_table = [
+        {
+            "table": table,
+            "label": f"{table}번",
+            "assigned": table_assigned[table],
+            "checked_in": table_checked.get(table, 0),
+        }
+        for table in sorted(table_assigned, key=lambda value: int(value) if str(value).isdigit() else 9999)
+    ]
     return {
         "attend": attend,
         "decline": decline,
@@ -644,6 +679,11 @@ def attendance_stats():
         "other": other,
         "by_dept": by_dept,
         "by_status": by_status,
+        "checked_by_year": checked_by_year,
+        "checked_other": checked_other,
+        "checked_by_dept": checked_by_dept,
+        "checked_by_status": checked_by_status,
+        "by_table": by_table,
     }
 
 

@@ -54,6 +54,8 @@
       <div class="tabs" role="tablist" aria-label="안내 구분">
         <button type="button" class="tab is-active" role="tab" id="tab-info" aria-controls="panel-info" aria-selected="true" data-tab="info">행사 안내</button>
         <button type="button" class="tab" role="tab" id="tab-program" aria-controls="panel-program" aria-selected="false" data-tab="program" tabindex="-1">이날의 자리</button>
+        <button type="button" class="tab" role="tab" id="tab-checkin" aria-controls="panel-checkin" aria-selected="false" data-tab="checkin" tabindex="-1">출석자 현황</button>
+        <button type="button" class="tab" role="tab" id="tab-tables" aria-controls="panel-tables" aria-selected="false" data-tab="tables" tabindex="-1">테이블별 출석</button>
       </div>
 
       <div class="tab-panels">
@@ -137,6 +139,52 @@
             </li>
             {% endfor %}
           </ol>
+        </div>
+
+        <div class="tab-panel" role="tabpanel" id="panel-checkin" aria-labelledby="tab-checkin" hidden>
+          <div class="tally-board presence-board" id="checkin-tally" aria-label="현장 출석 집계"
+               data-checked="{{ stats.checked_in }}"
+               data-checked-other="{{ stats.checked_other }}"
+               data-checked-by-year='{{ stats.checked_by_year|tojson }}'
+               data-checked-by-dept='{{ stats.checked_by_dept|tojson }}'
+               data-checked-by-status='{{ stats.checked_by_status|tojson }}'
+               data-by-table='{{ stats.by_table|tojson }}'>
+            <div class="tally-total">
+              <strong id="checked-count">{{ stats.checked_in }}</strong>
+              <span>현장 출석</span>
+            </div>
+            <div class="tally-side">
+              <div class="tally-tabs" role="tablist" aria-label="출석자 통계 구분">
+                <button type="button" class="tally-tab is-active" role="tab" aria-selected="true" data-presence="year">학번별</button>
+                <button type="button" class="tally-tab" role="tab" aria-selected="false" data-presence="dept">소속학과별</button>
+                <button type="button" class="tally-tab" role="tab" aria-selected="false" data-presence="status">재학생·졸업생</button>
+              </div>
+              <ul class="tally-years" id="checked-breakdown">
+                {% for row in stats.checked_by_year %}
+                <li><strong>{{ row.people }}</strong><span>{{ row.label }}</span></li>
+                {% endfor %}
+                {% if stats.checked_other %}
+                <li><strong>{{ stats.checked_other }}</strong><span>기타</span></li>
+                {% endif %}
+              </ul>
+            </div>
+          </div>
+          <p class="panel-note">QR 출석 체크를 완료한 인원 기준입니다.</p>
+        </div>
+
+        <div class="tab-panel" role="tabpanel" id="panel-tables" aria-labelledby="tab-tables" hidden>
+          <div class="table-status" id="table-status" aria-label="테이블별 출석 현황">
+            {% for row in stats.by_table %}
+            <div class="table-status-card{% if row.assigned and row.checked_in >= row.assigned %} is-full{% endif %}">
+              <strong>{{ row.table }}</strong>
+              <div class="table-label">번 테이블</div>
+              <div class="table-count">{{ row.checked_in }} / {{ row.assigned }}명</div>
+            </div>
+            {% else %}
+            <p class="panel-note">아직 테이블 배정·출석 데이터가 없습니다.</p>
+            {% endfor %}
+          </div>
+          <p class="panel-note">각 테이블의 배정 인원 대비 현장 출석 수입니다.</p>
         </div>
       </div>
     </section>
@@ -325,10 +373,57 @@
         });
       }
 
+      var checkinBoard = document.getElementById("checkin-tally");
+      var checkedList = document.getElementById("checked-breakdown");
+      if (checkinBoard && checkedList) {
+        var presence = {
+          checked_other: Number(checkinBoard.getAttribute("data-checked-other") || 0),
+          checked_by_year: JSON.parse(checkinBoard.getAttribute("data-checked-by-year") || "[]"),
+          checked_by_dept: JSON.parse(checkinBoard.getAttribute("data-checked-by-dept") || "[]"),
+          checked_by_status: JSON.parse(checkinBoard.getAttribute("data-checked-by-status") || "[]"),
+        };
+        var presenceMode = "year";
+        function presenceItem(count, label) {
+          return "<li><strong>" + count + "</strong><span>" + label + "</span></li>";
+        }
+        function renderPresence(next) {
+          presenceMode = next || presenceMode;
+          Array.prototype.forEach.call(checkinBoard.querySelectorAll(".tally-tab"), function (tab) {
+            var on = tab.getAttribute("data-presence") === presenceMode;
+            tab.classList.toggle("is-active", on);
+            tab.setAttribute("aria-selected", on ? "true" : "false");
+          });
+          var html = "";
+          if (presenceMode === "dept") {
+            (presence.checked_by_dept || []).forEach(function (row) {
+              if (!row.people && row.key === "other") return;
+              html += presenceItem(row.people || 0, row.label);
+            });
+          } else if (presenceMode === "status") {
+            (presence.checked_by_status || []).forEach(function (row) {
+              if (!row.people && row.key === "other") return;
+              html += presenceItem(row.people || 0, row.label);
+            });
+          } else {
+            (presence.checked_by_year || []).forEach(function (row) {
+              html += presenceItem(row.people, row.label);
+            });
+            if (presence.checked_other) html += presenceItem(presence.checked_other, "기타");
+          }
+          checkedList.innerHTML = html;
+        }
+        checkinBoard.addEventListener("click", function (event) {
+          var tab = event.target.closest(".tally-tab");
+          if (tab) renderPresence(tab.getAttribute("data-presence"));
+        });
+      }
+
       var tabs = Array.prototype.slice.call(document.querySelectorAll(".tab"));
       var panels = {
         info: document.getElementById("panel-info"),
-        program: document.getElementById("panel-program")
+        program: document.getElementById("panel-program"),
+        checkin: document.getElementById("panel-checkin"),
+        tables: document.getElementById("panel-tables")
       };
 
       function activate(name, focusTab) {
@@ -341,6 +436,7 @@
         });
         Object.keys(panels).forEach(function (key) {
           var panel = panels[key];
+          if (!panel) return;
           var on = key === name;
           panel.classList.toggle("is-active", on);
           panel.hidden = !on;

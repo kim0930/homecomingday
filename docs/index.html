@@ -54,6 +54,8 @@
       <div class="tabs" role="tablist" aria-label="안내 구분">
         <button type="button" class="tab is-active" role="tab" id="tab-info" aria-controls="panel-info" aria-selected="true" data-tab="info">행사 안내</button>
         <button type="button" class="tab" role="tab" id="tab-program" aria-controls="panel-program" aria-selected="false" data-tab="program" tabindex="-1">이날의 자리</button>
+        <button type="button" class="tab" role="tab" id="tab-checkin" aria-controls="panel-checkin" aria-selected="false" data-tab="checkin" tabindex="-1">출석자 현황</button>
+        <button type="button" class="tab" role="tab" id="tab-tables" aria-controls="panel-tables" aria-selected="false" data-tab="tables" tabindex="-1">테이블별 출석</button>
       </div>
 
       <div class="tab-panels">
@@ -245,6 +247,29 @@
             </li>
             
           </ol>
+        </div>
+
+        <div class="tab-panel" role="tabpanel" id="panel-checkin" aria-labelledby="tab-checkin" hidden>
+          <div class="tally-board presence-board" id="checkin-tally" aria-label="현장 출석 집계">
+            <div class="tally-total">
+              <strong id="checked-count">0</strong>
+              <span>현장 출석</span>
+            </div>
+            <div class="tally-side">
+              <div class="tally-tabs" role="tablist" aria-label="출석자 통계 구분">
+                <button type="button" class="tally-tab is-active" role="tab" aria-selected="true" data-presence="year">학번별</button>
+                <button type="button" class="tally-tab" role="tab" aria-selected="false" data-presence="dept">소속학과별</button>
+                <button type="button" class="tally-tab" role="tab" aria-selected="false" data-presence="status">재학생·졸업생</button>
+              </div>
+              <ul class="tally-years" id="checked-breakdown"></ul>
+            </div>
+          </div>
+          <p class="panel-note">QR 출석 체크를 완료한 인원 기준입니다.</p>
+        </div>
+
+        <div class="tab-panel" role="tabpanel" id="panel-tables" aria-labelledby="tab-tables" hidden>
+          <div class="table-status" id="table-status" aria-label="테이블별 출석 현황"></div>
+          <p class="panel-note">각 테이블의 배정 인원 대비 현장 출석 수입니다.</p>
         </div>
       </div>
     </section>
@@ -550,7 +575,9 @@
       var tabs = Array.prototype.slice.call(document.querySelectorAll(".tab"));
       var panels = {
         info: document.getElementById("panel-info"),
-        program: document.getElementById("panel-program")
+        program: document.getElementById("panel-program"),
+        checkin: document.getElementById("panel-checkin"),
+        tables: document.getElementById("panel-tables")
       };
 
       function activate(name, focusTab) {
@@ -563,6 +590,7 @@
         });
         Object.keys(panels).forEach(function (key) {
           var panel = panels[key];
+          if (!panel) return;
           var on = key === name;
           panel.classList.toggle("is-active", on);
           panel.hidden = !on;
@@ -619,6 +647,7 @@
   </script>
   <script src="rsvp-config.js"></script>
   <script src="content.js"></script>
+  <script src="status.js"></script>
   <script src="rsvp.js"></script>
 </body>
 
