@@ -30,7 +30,37 @@
   var programEditor = null;
   var rsvpBody = null;
   var adminStats = null;
+  var rsvpModal = null;
+  var rsvpForm = null;
+  var rsvpModalError = null;
+  var rsvpModalTitle = null;
+  var latestRows = [];
   var panelReady = false;
+
+  var AFFILIATION_OPTIONS = [
+    ["ae_student", "건축공학전공 재학생"],
+    ["ae_alumni", "건축공학전공 졸업생"],
+    ["me_student", "건축기계설비공학과 재학생"],
+    ["me_alumni", "건축기계설비공학과 졸업생"],
+    ["sc_student", "스마트시티공학과 재학생"],
+    ["sc_alumni", "스마트시티공학과 졸업생"],
+    ["faculty", "교직원"],
+    ["alumni", "동문"],
+    ["other", "기타"],
+  ];
+
+  var STUDENT_YEARS = [];
+  (function buildYears() {
+    var i;
+    for (i = 26; i >= 0; i--) STUDENT_YEARS.push(("0" + i).slice(-2));
+    for (i = 99; i >= 80; i--) STUDENT_YEARS.push(String(i));
+  })();
+
+  var GRAD_YEARS = [];
+  (function buildGrads() {
+    var y;
+    for (y = 2026; y >= 1988; y--) GRAD_YEARS.push(String(y));
+  })();
 
   function post(body) {
     return fetch(apiUrl, {
@@ -113,12 +143,44 @@
       '<p id="save-error" class="banner warn" hidden role="alert"></p>' +
       '<button type="button" id="save-btn">안내·식순 저장</button>' +
       '<section class="admin-card">' +
+      '<div class="admin-card-head">' +
       "<h2>참석 회신 미리보기</h2>" +
+      '<button type="button" id="add-rsvp-btn" class="ghost">회신 추가</button>' +
+      "</div>" +
+      '<p class="form-note">시트 DB와 바로 연동됩니다. 연락처가 고유 키입니다.</p>' +
+      '<p id="rsvp-status" class="banner ok" hidden role="status"></p>' +
       '<div class="table-wrap"><table><thead><tr>' +
-      "<th>수정시각</th><th>이름</th><th>소속학과</th><th>학번</th><th>졸업연도</th>" +
+      "<th>관리</th><th>수정시각</th><th>이름</th><th>소속학과</th><th>학번</th><th>졸업연도</th>" +
       "<th>현직장</th><th>직책</th><th>연락처</th><th>이메일</th><th>참석</th><th>테이블</th><th>체크인</th><th>메시지</th>" +
       "</tr></thead><tbody id=\"rsvp-body\"></tbody></table></div>" +
-      "</section>";
+      "</section>" +
+      '<div id="rsvp-modal" class="admin-modal" hidden>' +
+      '<div class="admin-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="rsvp-modal-title">' +
+      '<div class="admin-card-head">' +
+      '<h2 id="rsvp-modal-title">회신 수정</h2>' +
+      '<button type="button" id="rsvp-modal-close" class="ghost">닫기</button>' +
+      "</div>" +
+      '<form id="rsvp-form" class="fields admin-fields" novalidate>' +
+      '<input type="hidden" name="original_phone_key" value="">' +
+      '<label><span>이름</span><input name="name" required maxlength="40"></label>' +
+      '<label><span>소속학과</span><select name="affiliation" required></select></label>' +
+      '<label><span>학번</span><select name="student_year" required></select></label>' +
+      '<label><span>졸업연도</span><select name="grad_year"></select></label>' +
+      '<label><span>현직장</span><input name="workplace" maxlength="60"></label>' +
+      '<label><span>직책</span><input name="title" maxlength="40"></label>' +
+      '<label><span>연락처</span><input name="phone" required placeholder="010-0000-0000"></label>' +
+      '<label><span>이메일</span><input name="email" type="email" required maxlength="80"></label>' +
+      '<label><span>참석 여부</span><select name="attendance" required>' +
+      '<option value="attend">참석</option><option value="decline">불참</option></select></label>' +
+      '<label><span>테이블</span><input name="table_no" inputmode="numeric" placeholder="예: 4"></label>' +
+      '<label><span>체크인 시각</span><input name="checked_in_at" placeholder="비우면 미체크인"></label>' +
+      '<label class="wide"><span>메시지</span><textarea name="message" rows="3" maxlength="200"></textarea></label>' +
+      "</form>" +
+      '<p id="rsvp-modal-error" class="banner warn" hidden role="alert"></p>' +
+      '<div class="program-row-actions">' +
+      '<button type="button" id="rsvp-save-btn">저장</button>' +
+      '<button type="button" id="rsvp-cancel-btn" class="ghost">취소</button>' +
+      "</div></div></div>";
 
     saveStatus = document.getElementById("save-status");
     saveError = document.getElementById("save-error");
@@ -126,6 +188,12 @@
     programEditor = document.getElementById("program-editor");
     rsvpBody = document.getElementById("rsvp-body");
     adminStats = document.getElementById("admin-stats");
+    rsvpModal = document.getElementById("rsvp-modal");
+    rsvpForm = document.getElementById("rsvp-form");
+    rsvpModalError = document.getElementById("rsvp-modal-error");
+    rsvpModalTitle = document.getElementById("rsvp-modal-title");
+
+    fillRsvpSelects();
 
     document.getElementById("logout-btn").addEventListener("click", logout);
     document.getElementById("save-btn").addEventListener("click", save);
@@ -133,9 +201,191 @@
     document.getElementById("add-program").addEventListener("click", function () {
       programEditor.appendChild(makeProgramRow({ title: "", remark: [] }));
     });
+    document.getElementById("add-rsvp-btn").addEventListener("click", function () {
+      openRsvpEditor(null);
+    });
+    document.getElementById("rsvp-modal-close").addEventListener("click", closeRsvpEditor);
+    document.getElementById("rsvp-cancel-btn").addEventListener("click", closeRsvpEditor);
+    document.getElementById("rsvp-save-btn").addEventListener("click", saveRsvpEditor);
+    rsvpModal.addEventListener("click", function (event) {
+      if (event.target === rsvpModal) closeRsvpEditor();
+    });
     renderCheckinQr();
 
     panelReady = true;
+  }
+
+  function fillRsvpSelects() {
+    if (!rsvpForm) return;
+    var aff = rsvpForm.elements.affiliation;
+    var year = rsvpForm.elements.student_year;
+    var grad = rsvpForm.elements.grad_year;
+    aff.innerHTML = '<option value="" disabled selected>선택</option>';
+    AFFILIATION_OPTIONS.forEach(function (pair) {
+      var opt = document.createElement("option");
+      opt.value = pair[0];
+      opt.textContent = pair[1];
+      aff.appendChild(opt);
+    });
+    year.innerHTML = '<option value="" disabled selected>선택</option>';
+    STUDENT_YEARS.forEach(function (y) {
+      var opt = document.createElement("option");
+      opt.value = y;
+      opt.textContent = y + "학번";
+      year.appendChild(opt);
+    });
+    grad.innerHTML = '<option value="">해당 없음</option>';
+    GRAD_YEARS.forEach(function (y) {
+      var opt = document.createElement("option");
+      opt.value = y;
+      opt.textContent = y + "년 졸업";
+      grad.appendChild(opt);
+    });
+  }
+
+  function affiliationKeyFromLabel(label) {
+    var text = String(label || "").trim();
+    for (var i = 0; i < AFFILIATION_OPTIONS.length; i++) {
+      if (AFFILIATION_OPTIONS[i][1] === text) return AFFILIATION_OPTIONS[i][0];
+    }
+    return "";
+  }
+
+  function extractYearCode(value) {
+    var match = String(value || "").match(/(\d{2})/);
+    return match ? match[1] : "";
+  }
+
+  function extractGradYear(value) {
+    var match = String(value || "").match(/(20\d{2}|19\d{2})/);
+    return match ? match[1] : "";
+  }
+
+  function attendanceKeyFromLabel(value) {
+    var text = String(value || "").trim();
+    if (text === "참석" || text === "attend") return "attend";
+    if (text === "불참" || text === "decline") return "decline";
+    return "attend";
+  }
+
+  function openRsvpEditor(row) {
+    if (!rsvpModal || !rsvpForm) return;
+    show(rsvpModalError, "");
+    rsvpModalTitle.textContent = row ? "회신 수정" : "회신 추가";
+    rsvpForm.reset();
+    fillRsvpSelects();
+    rsvpForm.elements.original_phone_key.value = row && row.phone_key ? row.phone_key : "";
+    if (row) {
+      rsvpForm.elements.name.value = row.name || "";
+      rsvpForm.elements.affiliation.value =
+        affiliationKeyFromLabel(row.affiliation) || row.affiliation || "";
+      rsvpForm.elements.student_year.value = extractYearCode(row.student_year);
+      rsvpForm.elements.grad_year.value = extractGradYear(row.grad_year);
+      rsvpForm.elements.workplace.value = row.workplace || "";
+      rsvpForm.elements.title.value = row.title || "";
+      rsvpForm.elements.phone.value = row.phone || "";
+      rsvpForm.elements.email.value = row.email || "";
+      rsvpForm.elements.attendance.value = attendanceKeyFromLabel(
+        row.attendance_key || row.attendance
+      );
+      rsvpForm.elements.table_no.value = row.table_no || "";
+      rsvpForm.elements.checked_in_at.value = row.checked_in_at || "";
+      rsvpForm.elements.message.value = row.message || "";
+    } else {
+      rsvpForm.elements.attendance.value = "attend";
+    }
+    rsvpModal.hidden = false;
+    rsvpForm.elements.name.focus();
+  }
+
+  function closeRsvpEditor() {
+    if (!rsvpModal) return;
+    rsvpModal.hidden = true;
+    show(rsvpModalError, "");
+  }
+
+  function readRsvpForm() {
+    return {
+      original_phone_key: rsvpForm.elements.original_phone_key.value || "",
+      name: rsvpForm.elements.name.value || "",
+      affiliation: rsvpForm.elements.affiliation.value || "",
+      student_year: rsvpForm.elements.student_year.value || "",
+      grad_year: rsvpForm.elements.grad_year.value || "",
+      workplace: rsvpForm.elements.workplace.value || "",
+      title: rsvpForm.elements.title.value || "",
+      phone: rsvpForm.elements.phone.value || "",
+      email: rsvpForm.elements.email.value || "",
+      attendance: rsvpForm.elements.attendance.value || "",
+      table_no: rsvpForm.elements.table_no.value || "",
+      checked_in_at: rsvpForm.elements.checked_in_at.value || "",
+      message: rsvpForm.elements.message.value || "",
+    };
+  }
+
+  function saveRsvpEditor() {
+    if (!password || !rsvpForm) return;
+    show(rsvpModalError, "");
+    var payload = readRsvpForm();
+    var btn = document.getElementById("rsvp-save-btn");
+    if (btn) btn.disabled = true;
+    post({
+      action: "admin_upsert_rsvp",
+      password: password,
+      original_phone_key: payload.original_phone_key,
+      name: payload.name,
+      affiliation: payload.affiliation,
+      student_year: payload.student_year,
+      grad_year: payload.grad_year,
+      workplace: payload.workplace,
+      title: payload.title,
+      phone: payload.phone,
+      email: payload.email,
+      attendance: payload.attendance,
+      table_no: payload.table_no,
+      checked_in_at: payload.checked_in_at,
+      message: payload.message,
+    })
+      .then(function (data) {
+        if (btn) btn.disabled = false;
+        if (!data || !data.ok) {
+          show(rsvpModalError, apiOutdatedMessage(data && data.error) || "저장에 실패했습니다.");
+          return;
+        }
+        closeRsvpEditor();
+        renderStats(data.stats || null);
+        renderRows(data.rows || []);
+        var note = document.getElementById("rsvp-status");
+        show(note, data.updated ? "회신을 수정했습니다." : "회신을 추가했습니다.");
+      })
+      .catch(function () {
+        if (btn) btn.disabled = false;
+        show(rsvpModalError, "저장 중 네트워크 오류가 발생했습니다.");
+      });
+  }
+
+  function deleteRsvp(row) {
+    if (!password || !row) return;
+    var key = row.phone_key || row.phone;
+    var label = (row.name || "이 회신") + (row.phone ? " (" + row.phone + ")" : "");
+    if (!window.confirm(label + " 을(를) 삭제할까요? 시트에서도 삭제됩니다.")) return;
+    post({
+      action: "admin_delete_rsvp",
+      password: password,
+      phone_key: key,
+    })
+      .then(function (data) {
+        if (!data || !data.ok) {
+          show(saveError, apiOutdatedMessage(data && data.error) || "삭제에 실패했습니다.");
+          return;
+        }
+        renderStats(data.stats || null);
+        renderRows(data.rows || []);
+        var note = document.getElementById("rsvp-status");
+        show(note, "회신을 삭제했습니다.");
+      })
+      .catch(function () {
+        show(saveError, "삭제 중 네트워크 오류가 발생했습니다.");
+      });
   }
 
   function checkinPageUrl() {
@@ -182,6 +432,8 @@
     adminPanel.innerHTML = "";
     panelReady = false;
     saveStatus = saveError = contentFields = programEditor = rsvpBody = adminStats = null;
+    rsvpModal = rsvpForm = rsvpModalError = rsvpModalTitle = null;
+    latestRows = [];
     loginPanel.hidden = false;
   }
 
@@ -362,15 +614,35 @@
   }
 
   function renderRows(rows) {
+    latestRows = rows || [];
     rsvpBody.innerHTML = "";
-    if (!rows || !rows.length) {
+    if (!latestRows.length) {
       var empty = document.createElement("tr");
-      empty.innerHTML = '<td colspan="13">아직 회신이 없습니다.</td>';
+      empty.innerHTML = '<td colspan="14">아직 회신이 없습니다.</td>';
       rsvpBody.appendChild(empty);
       return;
     }
-    rows.forEach(function (row) {
+    latestRows.forEach(function (row, index) {
       var tr = document.createElement("tr");
+      var actions = document.createElement("td");
+      actions.className = "admin-row-actions";
+      var editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "ghost";
+      editBtn.textContent = "수정";
+      editBtn.addEventListener("click", function () {
+        openRsvpEditor(latestRows[index]);
+      });
+      var delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.className = "ghost";
+      delBtn.textContent = "삭제";
+      delBtn.addEventListener("click", function () {
+        deleteRsvp(latestRows[index]);
+      });
+      actions.appendChild(editBtn);
+      actions.appendChild(delBtn);
+      tr.appendChild(actions);
       [
         row.updated_at,
         row.name,

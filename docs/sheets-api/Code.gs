@@ -392,6 +392,20 @@ function doPost(e) {
       return json_(seating);
     }
 
+    if (action === "admin_upsert_rsvp") {
+      if (!checkPassword_(data.password)) {
+        return json_({ ok: false, error: "비밀번호가 맞지 않습니다." });
+      }
+      return json_(adminUpsertRsvp_(data));
+    }
+
+    if (action === "admin_delete_rsvp") {
+      if (!checkPassword_(data.password)) {
+        return json_({ ok: false, error: "비밀번호가 맞지 않습니다." });
+      }
+      return json_(adminDeleteRsvp_(data.phone_key || data.phone));
+    }
+
     if (action === "checkin") {
       return json_(checkin_(data.phone));
     }
@@ -660,11 +674,154 @@ function listRsvps_() {
       attendance: String(values[i][COL.attendance] || ""),
       message: String(values[i][COL.message] || ""),
       consent: String(values[i][COL.consent] || ""),
+      phone_key: rowPhoneKey_(values[i]),
+      attendance_key: String(values[i][COL.attendance_key] || ""),
       checked_in_at: cellText_(values[i][COL.checked_in_at]),
       table_no: cellText_(values[i][COL.table_no]) || lookupTableNo_(values[i][COL.name]),
     });
   }
   return rows;
+}
+
+function affiliationKeyFromLabel_(label) {
+  var text = String(label || "").trim();
+  for (var key in AFFILIATIONS) {
+    if (AFFILIATIONS.hasOwnProperty(key) && AFFILIATIONS[key] === text) return key;
+  }
+  return "";
+}
+
+function adminNormalizePayload_(data) {
+  data = data || {};
+  var affiliation = String(data.affiliation || "").trim();
+  if (!AFFILIATIONS[affiliation]) {
+    affiliation = affiliationKeyFromLabel_(affiliation);
+  }
+  var studentYear = String(data.student_year || "");
+  var sy = studentYear.match(/(\d{2})/);
+  if (sy) studentYear = sy[1];
+  var attendance = String(data.attendance || "").trim();
+  if (attendance === "참석") attendance = "attend";
+  if (attendance === "불참") attendance = "decline";
+  var gradYear = String(data.grad_year || "").trim();
+  if (gradYear === "해당 없음" || gradYear === "-" || gradYear === "—") gradYear = "";
+  var gy = gradYear.match(/(20\d{2}|19\d{2})/);
+  if (gy) gradYear = gy[1];
+  else if (!/^\d{4}$/.test(gradYear)) gradYear = "";
+  return {
+    consent: "yes",
+    name: data.name,
+    affiliation: affiliation,
+    student_year: studentYear,
+    grad_year: gradYear,
+    workplace: data.workplace,
+    title: data.title,
+    phone: data.phone,
+    email: data.email,
+    attendance: attendance,
+    message: data.message,
+  };
+}
+
+function adminUpsertRsvp_(data) {
+  var cleaned = validate_(adminNormalizePayload_(data));
+  if (cleaned.error) return { ok: false, error: cleaned.error };
+
+  var sheet = sheet_();
+  var values = sheet.getDataRange().getValues();
+  var originalKey = normalizePhoneKey_(data.original_phone_key || "");
+  var matchIndex = -1;
+  if (originalKey) {
+    for (var i = 1; i < values.length; i++) {
+      if (rowPhoneKey_(values[i]) === originalKey) {
+        matchIndex = i;
+        break;
+      }
+    }
+    if (matchIndex < 0) {
+      return { ok: false, error: "수정할 회신을 찾지 못했습니다. 목록을 새로고침해 주세요." };
+    }
+  }
+
+  for (var j = 1; j < values.length; j++) {
+    if (j === matchIndex) continue;
+    if (rowPhoneKey_(values[j]) === cleaned.phone_key) {
+      return { ok: false, error: "이미 같은 연락처로 등록된 회신이 있습니다." };
+    }
+  }
+
+  var tableNo = String(data.table_no == null ? "" : data.table_no).trim();
+  if (tableNo && !/^\d{1,3}$/.test(tableNo)) {
+    return { ok: false, error: "테이블 번호는 숫자로 입력해 주세요." };
+  }
+  if (!tableNo) tableNo = lookupTableNo_(cleaned.name) || "";
+
+  var checkedIn = String(data.checked_in_at == null ? "" : data.checked_in_at).trim();
+  if (matchIndex >= 0 && data.checked_in_at == null) {
+    checkedIn = cellText_(values[matchIndex][COL.checked_in_at]);
+  }
+
+  var stamp = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm");
+  var line = [
+    stamp,
+    cleaned.name,
+    cleaned.affiliation_label,
+    cleaned.student_year_label,
+    cleaned.grad_year_label,
+    cleaned.workplace,
+    cleaned.title,
+    cleaned.phone,
+    cleaned.email,
+    cleaned.attendance_label,
+    cleaned.message,
+    cleaned.consent,
+    cleaned.phone_key,
+    cleaned.attendance,
+    checkedIn,
+    tableNo,
+  ];
+
+  if (matchIndex >= 0) {
+    sheet.getRange(matchIndex + 1, COL.phone_key + 1).setNumberFormat("@");
+    sheet.getRange(matchIndex + 1, 1, 1, HEADERS.length).setValues([line]);
+    return {
+      ok: true,
+      updated: true,
+      stats: stats_(),
+      rows: listRsvps_(),
+    };
+  }
+
+  sheet.appendRow(line);
+  var newRow = sheet.getLastRow();
+  sheet.getRange(newRow, COL.phone_key + 1).setNumberFormat("@");
+  sheet.getRange(newRow, COL.phone_key + 1).setValue(cleaned.phone_key);
+  return {
+    ok: true,
+    updated: false,
+    stats: stats_(),
+    rows: listRsvps_(),
+  };
+}
+
+function adminDeleteRsvp_(phoneRaw) {
+  var phoneKey = normalizePhoneKey_(phoneRaw);
+  if (!/^0\d{8,10}$/.test(phoneKey)) {
+    return { ok: false, error: "삭제할 연락처를 확인해 주세요." };
+  }
+  var sheet = sheet_();
+  var values = sheet.getDataRange().getValues();
+  for (var i = 1; i < values.length; i++) {
+    if (rowPhoneKey_(values[i]) !== phoneKey) continue;
+    sheet.deleteRow(i + 1);
+    return {
+      ok: true,
+      deleted: true,
+      stats: stats_(),
+      rows: listRsvps_(),
+    };
+  }
+  return { ok: false, error: "삭제할 회신을 찾지 못했습니다." };
 }
 
 function applySeating_() {

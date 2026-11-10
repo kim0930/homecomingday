@@ -1107,6 +1107,45 @@ button:hover,
 
 .table-wrap { overflow-x: auto; }
 
+.admin-row-actions {
+  display: flex;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.admin-row-actions .ghost {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.admin-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(11, 31, 58, 0.45);
+}
+
+.admin-modal[hidden] {
+  display: none !important;
+}
+
+.admin-modal-dialog {
+  width: min(680px, 100%);
+  max-height: min(92vh, 920px);
+  overflow: auto;
+  padding: 22px;
+  background: var(--paper);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+.admin-modal-dialog .fields {
+  margin: 12px 0 16px;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
