@@ -35,6 +35,11 @@
   var rsvpModalError = null;
   var rsvpModalTitle = null;
   var latestRows = [];
+  var rsvpFilters = { year: "", dept: "", status: "" };
+  var rsvpFilterYear = null;
+  var rsvpFilterDept = null;
+  var rsvpFilterStatus = null;
+  var rsvpFilterMeta = null;
   var panelReady = false;
 
   var AFFILIATION_OPTIONS = [
@@ -148,6 +153,24 @@
       '<button type="button" id="add-rsvp-btn" class="ghost">회신 추가</button>' +
       "</div>" +
       '<p class="form-note">시트 DB와 바로 연동됩니다. 연락처가 고유 키입니다.</p>' +
+      '<div class="admin-rsvp-filters" id="rsvp-filters">' +
+      '<label><span>학번</span><select id="rsvp-filter-year"><option value="">전체</option></select></label>' +
+      '<label><span>소속학과</span><select id="rsvp-filter-dept">' +
+      '<option value="">전체</option>' +
+      '<option value="ae">건축공학전공</option>' +
+      '<option value="me">건축기계설비공학과</option>' +
+      '<option value="sc">스마트시티공학과</option>' +
+      '<option value="other">기타</option>' +
+      "</select></label>" +
+      '<label><span>재학생·졸업생</span><select id="rsvp-filter-status">' +
+      '<option value="">전체</option>' +
+      '<option value="student">재학생</option>' +
+      '<option value="alumni">졸업생</option>' +
+      '<option value="other">기타</option>' +
+      "</select></label>" +
+      '<button type="button" id="rsvp-filter-reset" class="ghost">필터 초기화</button>' +
+      "</div>" +
+      '<p id="rsvp-filter-meta" class="form-note"></p>' +
       '<p id="rsvp-status" class="banner ok" hidden role="status"></p>' +
       '<div class="table-wrap"><table><thead><tr>' +
       "<th>관리</th><th>수정시각</th><th>이름</th><th>소속학과</th><th>학번</th><th>졸업연도</th>" +
@@ -192,6 +215,10 @@
     rsvpForm = document.getElementById("rsvp-form");
     rsvpModalError = document.getElementById("rsvp-modal-error");
     rsvpModalTitle = document.getElementById("rsvp-modal-title");
+    rsvpFilterYear = document.getElementById("rsvp-filter-year");
+    rsvpFilterDept = document.getElementById("rsvp-filter-dept");
+    rsvpFilterStatus = document.getElementById("rsvp-filter-status");
+    rsvpFilterMeta = document.getElementById("rsvp-filter-meta");
 
     fillRsvpSelects();
     bindRsvpPhoneFormat();
@@ -210,6 +237,25 @@
     document.getElementById("rsvp-save-btn").addEventListener("click", saveRsvpEditor);
     rsvpModal.addEventListener("click", function (event) {
       if (event.target === rsvpModal) closeRsvpEditor();
+    });
+    rsvpFilterYear.addEventListener("change", function () {
+      rsvpFilters.year = rsvpFilterYear.value || "";
+      paintRsvpTable();
+    });
+    rsvpFilterDept.addEventListener("change", function () {
+      rsvpFilters.dept = rsvpFilterDept.value || "";
+      paintRsvpTable();
+    });
+    rsvpFilterStatus.addEventListener("change", function () {
+      rsvpFilters.status = rsvpFilterStatus.value || "";
+      paintRsvpTable();
+    });
+    document.getElementById("rsvp-filter-reset").addEventListener("click", function () {
+      rsvpFilters = { year: "", dept: "", status: "" };
+      if (rsvpFilterYear) rsvpFilterYear.value = "";
+      if (rsvpFilterDept) rsvpFilterDept.value = "";
+      if (rsvpFilterStatus) rsvpFilterStatus.value = "";
+      paintRsvpTable();
     });
     renderCheckinQr();
 
@@ -466,7 +512,9 @@
     panelReady = false;
     saveStatus = saveError = contentFields = programEditor = rsvpBody = adminStats = null;
     rsvpModal = rsvpForm = rsvpModalError = rsvpModalTitle = null;
+    rsvpFilterYear = rsvpFilterDept = rsvpFilterStatus = rsvpFilterMeta = null;
     latestRows = [];
+    rsvpFilters = { year: "", dept: "", status: "" };
     loginPanel.hidden = false;
   }
 
@@ -646,16 +694,115 @@
     renderAdminBreakdown(stats, adminTallyMode);
   }
 
-  function renderRows(rows) {
-    latestRows = rows || [];
+  function cohortSortKey(year) {
+    var value = parseInt(year, 10);
+    if (isNaN(value)) return 9999;
+    if (value >= 80 && value <= 99) return 1900 + value;
+    if (value >= 0 && value < 50) return 2000 + value;
+    if (value >= 50 && value <= 79) return 1900 + value;
+    return 2000 + value;
+  }
+
+  function rowYearCode(row) {
+    return extractYearCode(row && row.student_year);
+  }
+
+  function rowDeptKey(row) {
+    var text = String((row && row.affiliation) || "");
+    if (text.indexOf("건축공학전공") >= 0) return "ae";
+    if (text.indexOf("건축기계설비") >= 0) return "me";
+    if (text.indexOf("스마트시티") >= 0) return "sc";
+    return "other";
+  }
+
+  function rowStatusKey(row) {
+    var text = String((row && row.affiliation) || "");
+    if (text.indexOf("재학생") >= 0) return "student";
+    if (text.indexOf("졸업생") >= 0 || text.indexOf("동문") >= 0) return "alumni";
+    return "other";
+  }
+
+  function filteredRows() {
+    return (latestRows || []).filter(function (row) {
+      if (rsvpFilters.year) {
+        var year = rowYearCode(row);
+        if (rsvpFilters.year === "other") {
+          if (year) return false;
+        } else if (year !== rsvpFilters.year) {
+          return false;
+        }
+      }
+      if (rsvpFilters.dept && rowDeptKey(row) !== rsvpFilters.dept) return false;
+      if (rsvpFilters.status && rowStatusKey(row) !== rsvpFilters.status) return false;
+      return true;
+    });
+  }
+
+  function refreshYearFilterOptions() {
+    if (!rsvpFilterYear) return;
+    var selected = rsvpFilters.year || "";
+    var years = {};
+    var hasOther = false;
+    (latestRows || []).forEach(function (row) {
+      var year = rowYearCode(row);
+      if (year) years[year] = true;
+      else hasOther = true;
+    });
+    var codes = Object.keys(years).sort(function (a, b) {
+      return cohortSortKey(a) - cohortSortKey(b);
+    });
+    rsvpFilterYear.innerHTML = '<option value="">전체</option>';
+    codes.forEach(function (year) {
+      var opt = document.createElement("option");
+      opt.value = year;
+      opt.textContent = year + "학번";
+      rsvpFilterYear.appendChild(opt);
+    });
+    if (hasOther) {
+      var other = document.createElement("option");
+      other.value = "other";
+      other.textContent = "기타(학번 없음)";
+      rsvpFilterYear.appendChild(other);
+    }
+    rsvpFilterYear.value = selected;
+    if (rsvpFilterYear.value !== selected) {
+      rsvpFilters.year = "";
+      rsvpFilterYear.value = "";
+    }
+  }
+
+  function syncFilterControls() {
+    if (rsvpFilterYear) rsvpFilterYear.value = rsvpFilters.year || "";
+    if (rsvpFilterDept) rsvpFilterDept.value = rsvpFilters.dept || "";
+    if (rsvpFilterStatus) rsvpFilterStatus.value = rsvpFilters.status || "";
+  }
+
+  function paintRsvpTable() {
+    if (!rsvpBody) return;
+    syncFilterControls();
+    var rows = filteredRows();
     rsvpBody.innerHTML = "";
+    if (rsvpFilterMeta) {
+      var active =
+        rsvpFilters.year || rsvpFilters.dept || rsvpFilters.status
+          ? " · 필터 적용 중"
+          : "";
+      rsvpFilterMeta.textContent =
+        "표시 " + rows.length + "명 / 전체 " + (latestRows || []).length + "명" + active;
+    }
     if (!latestRows.length) {
       var empty = document.createElement("tr");
       empty.innerHTML = '<td colspan="14">아직 회신이 없습니다.</td>';
       rsvpBody.appendChild(empty);
       return;
     }
-    latestRows.forEach(function (row, index) {
+    if (!rows.length) {
+      var none = document.createElement("tr");
+      none.innerHTML = '<td colspan="14">선택한 조건에 맞는 회신이 없습니다.</td>';
+      rsvpBody.appendChild(none);
+      return;
+    }
+    rows.forEach(function (row) {
       var tr = document.createElement("tr");
       var actions = document.createElement("td");
       actions.className = "admin-row-actions";
@@ -664,14 +811,14 @@
       editBtn.className = "ghost";
       editBtn.textContent = "수정";
       editBtn.addEventListener("click", function () {
-        openRsvpEditor(latestRows[index]);
+        openRsvpEditor(row);
       });
       var delBtn = document.createElement("button");
       delBtn.type = "button";
       delBtn.className = "ghost";
       delBtn.textContent = "삭제";
       delBtn.addEventListener("click", function () {
-        deleteRsvp(latestRows[index]);
+        deleteRsvp(row);
       });
       actions.appendChild(editBtn);
       actions.appendChild(delBtn);
@@ -697,6 +844,12 @@
       });
       rsvpBody.appendChild(tr);
     });
+  }
+
+  function renderRows(rows) {
+    latestRows = rows || [];
+    refreshYearFilterOptions();
+    paintRsvpTable();
   }
 
   function enterAdmin(data) {
