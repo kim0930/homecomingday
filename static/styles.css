@@ -790,6 +790,31 @@ button:hover,
   line-height: 1.2;
 }
 
+.checkin-table {
+  margin: 18px auto 0;
+  padding: 16px 18px;
+  max-width: 280px;
+  background: #eef2f8;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: var(--navy);
+}
+
+.checkin-table strong {
+  display: block;
+  font-family: "Noto Serif KR", serif;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.checkin-table span {
+  display: block;
+  margin-top: 6px;
+  font-size: 15px;
+  font-weight: 650;
+}
+
 .checkin-meta,
 .checkin-time {
   margin: 8px 0 0;

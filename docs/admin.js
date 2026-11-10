@@ -85,6 +85,7 @@
     adminPanel.innerHTML =
       '<div class="admin-actions">' +
       '<button type="button" id="export-btn" class="button">참석 회신 엑셀 내려받기</button>' +
+      '<button type="button" id="seating-btn" class="button ghost">자리표 테이블 반영</button>' +
       '<a class="button ghost" href="checkin.html" target="_blank" rel="noopener">출석 체크 페이지</a>' +
       '<button type="button" id="logout-btn" class="ghost">로그아웃</button>' +
       "</div>" +
@@ -116,7 +117,7 @@
       "<h2>참석 회신 미리보기</h2>" +
       '<div class="table-wrap"><table><thead><tr>' +
       "<th>수정시각</th><th>이름</th><th>소속학과</th><th>학번</th><th>졸업연도</th>" +
-      "<th>현직장</th><th>직책</th><th>연락처</th><th>이메일</th><th>참석</th><th>체크인</th><th>메시지</th>" +
+      "<th>현직장</th><th>직책</th><th>연락처</th><th>이메일</th><th>참석</th><th>테이블</th><th>체크인</th><th>메시지</th>" +
       "</tr></thead><tbody id=\"rsvp-body\"></tbody></table></div>" +
       "</section>";
 
@@ -130,6 +131,7 @@
     document.getElementById("logout-btn").addEventListener("click", logout);
     document.getElementById("save-btn").addEventListener("click", save);
     document.getElementById("export-btn").addEventListener("click", exportExcel);
+    document.getElementById("seating-btn").addEventListener("click", applySeating);
     document.getElementById("add-program").addEventListener("click", function () {
       programEditor.appendChild(makeProgramRow({ title: "", remark: [] }));
     });
@@ -365,7 +367,7 @@
     rsvpBody.innerHTML = "";
     if (!rows || !rows.length) {
       var empty = document.createElement("tr");
-      empty.innerHTML = '<td colspan="12">아직 회신이 없습니다.</td>';
+      empty.innerHTML = '<td colspan="13">아직 회신이 없습니다.</td>';
       rsvpBody.appendChild(empty);
       return;
     }
@@ -382,6 +384,7 @@
         row.phone,
         row.email,
         row.attendance,
+        row.table_no,
         row.checked_in_at,
         row.message,
       ].forEach(function (value) {
@@ -477,6 +480,32 @@
       });
   }
 
+  function applySeating() {
+    if (!password || !panelReady) return;
+    show(saveStatus, "");
+    show(saveError, "");
+    post({ action: "admin_apply_seating", password: password })
+      .then(function (data) {
+        if (!data || !data.ok) {
+          show(saveError, (data && data.error) || "자리표 반영에 실패했습니다.");
+          return;
+        }
+        renderStats(data.stats || null);
+        renderRows(data.rows || []);
+        var missing = (data.missing || []).length;
+        show(
+          saveStatus,
+          "자리표 기준으로 테이블 " +
+            (data.updated || 0) +
+            "건을 반영했습니다." +
+            (missing ? " (자리표에 없는 이름 " + missing + "명)" : "")
+        );
+      })
+      .catch(function () {
+        show(saveError, "자리표 반영 중 네트워크 오류가 발생했습니다.");
+      });
+  }
+
   function exportExcel() {
     if (!password || !panelReady) return;
     show(saveError, "");
@@ -499,6 +528,7 @@
             "연락처",
             "이메일",
             "참석여부",
+            "테이블",
             "체크인시각",
             "메시지",
             "동의",
@@ -516,6 +546,7 @@
             row.phone || "",
             row.email || "",
             row.attendance || "",
+            row.table_no || "",
             row.checked_in_at || "",
             row.message || "",
             row.consent || "",

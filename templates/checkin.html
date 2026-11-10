@@ -24,6 +24,11 @@
       </p>
       <p class="checkin-name">{{ result.name }}</p>
       <p class="checkin-meta">{{ result.affiliation }} · {{ result.attendance }}</p>
+      {% if result.table_no %}
+      <p class="checkin-table"><strong>{{ result.table_no }}</strong><span>번 테이블</span></p>
+      {% else %}
+      <p class="checkin-table"><span>테이블 미지정 · 스태프에게 문의해 주세요</span></p>
+      {% endif %}
       <p class="checkin-time">체크인 {{ result.checked_in_at }}</p>
     </section>
     {% else %}

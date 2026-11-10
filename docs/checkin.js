@@ -87,6 +87,16 @@
     }
     name.textContent = data.name || "";
     meta.textContent = [data.affiliation, data.attendance].filter(Boolean).join(" · ");
+    var tableEl = document.getElementById("checkin-table");
+    if (tableEl) {
+      if (data.table_no) {
+        tableEl.hidden = false;
+        tableEl.innerHTML = "<strong>" + data.table_no + "</strong><span>번 테이블</span>";
+      } else {
+        tableEl.hidden = false;
+        tableEl.innerHTML = "<span>테이블 미지정 · 스태프에게 문의해 주세요</span>";
+      }
+    }
     time.textContent = data.checked_in_at ? "체크인 " + data.checked_in_at : "";
   }
 
