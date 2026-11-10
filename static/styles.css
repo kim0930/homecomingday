@@ -260,12 +260,14 @@ h1 {
 .table-status-card {
   padding: 14px 10px;
   background: var(--paper-2);
+  border: 2px solid transparent;
   border-radius: 12px;
   text-align: center;
 }
 
 .table-status-card.is-full {
   background: #e5f2ea;
+  border: 2px solid #111;
 }
 
 .table-status-card strong {
