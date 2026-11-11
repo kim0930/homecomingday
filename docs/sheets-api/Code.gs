@@ -492,7 +492,16 @@ function lookupTableNo_(name) {
   return "";
 }
 
+function isDeclineRow_(rowValues) {
+  var key = String(rowValues[COL.attendance_key] || "").trim();
+  if (key === "decline") return true;
+  if (key === "attend") return false;
+  return String(rowValues[COL.attendance] || "").trim() === "불참";
+}
+
 function resolveTableNo_(rowValues) {
+  // 불참은 자리 배정 대상이 아닙니다.
+  if (isDeclineRow_(rowValues)) return "";
   var existing = cellText_(rowValues[COL.table_no]);
   if (existing) return existing;
   return lookupTableNo_(rowValues[COL.name]);
@@ -677,7 +686,17 @@ function listRsvps_() {
       phone_key: rowPhoneKey_(values[i]),
       attendance_key: String(values[i][COL.attendance_key] || ""),
       checked_in_at: cellText_(values[i][COL.checked_in_at]),
-      table_no: cellText_(values[i][COL.table_no]) || lookupTableNo_(values[i][COL.name]),
+      table_no: (function () {
+        if (isDeclineRow_(values[i])) {
+          // 불참인데 테이블이 남아 있으면 시트에서도 비웁니다.
+          if (cellText_(values[i][COL.table_no])) {
+            sheet.getRange(i + 1, COL.table_no + 1).setValue("");
+            values[i][COL.table_no] = "";
+          }
+          return "";
+        }
+        return cellText_(values[i][COL.table_no]) || lookupTableNo_(values[i][COL.name]);
+      })(),
     });
   }
   return rows;
@@ -754,10 +773,16 @@ function adminUpsertRsvp_(data) {
   if (tableNo && !/^\d{1,3}$/.test(tableNo)) {
     return { ok: false, error: "테이블 번호는 숫자로 입력해 주세요." };
   }
-  if (!tableNo) tableNo = lookupTableNo_(cleaned.name) || "";
+  if (cleaned.attendance === "decline") {
+    tableNo = "";
+  } else if (!tableNo) {
+    tableNo = lookupTableNo_(cleaned.name) || "";
+  }
 
   var checkedIn = String(data.checked_in_at == null ? "" : data.checked_in_at).trim();
-  if (matchIndex >= 0 && data.checked_in_at == null) {
+  if (cleaned.attendance === "decline") {
+    checkedIn = "";
+  } else if (matchIndex >= 0 && data.checked_in_at == null) {
     checkedIn = cellText_(values[matchIndex][COL.checked_in_at]);
   }
 
@@ -830,6 +855,13 @@ function applySeating_() {
   var updated = 0;
   var missing = [];
   for (var i = 1; i < values.length; i++) {
+    if (isDeclineRow_(values[i])) {
+      if (cellText_(values[i][COL.table_no])) {
+        sheet.getRange(i + 1, COL.table_no + 1).setValue("");
+        updated++;
+      }
+      continue;
+    }
     var name = normalizeName_(values[i][COL.name]);
     var tableNo = lookupTableNo_(name);
     if (!tableNo) {
@@ -1148,10 +1180,13 @@ function upsert_(row) {
   var sheet = sheet_();
   var values = sheet.getDataRange().getValues();
   var stamp = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm");
+  var decline = row.attendance === "decline";
   for (var i = 1; i < values.length; i++) {
     if (rowPhoneKey_(values[i]) === row.phone_key) {
-      var checkedIn = cellText_(values[i][COL.checked_in_at]);
-      var tableNo = cellText_(values[i][COL.table_no]) || lookupTableNo_(row.name);
+      var checkedIn = decline ? "" : cellText_(values[i][COL.checked_in_at]);
+      var tableNo = decline
+        ? ""
+        : cellText_(values[i][COL.table_no]) || lookupTableNo_(row.name);
       var line = [
         stamp,
         row.name,
@@ -1175,7 +1210,7 @@ function upsert_(row) {
       return;
     }
   }
-  var newTable = lookupTableNo_(row.name);
+  var newTable = decline ? "" : lookupTableNo_(row.name);
   sheet.appendRow([
     stamp,
     row.name,

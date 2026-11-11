@@ -247,6 +247,7 @@
 
     fillRsvpSelects();
     bindRsvpPhoneFormat();
+    bindRsvpAttendanceClearsTable();
     bindRsvpScrollSync();
 
     document.getElementById("logout-btn").addEventListener("click", logout);
@@ -357,6 +358,20 @@
     }
     input.addEventListener("input", applyFormat);
     input.addEventListener("blur", applyFormat);
+  }
+
+  function bindRsvpAttendanceClearsTable() {
+    if (!rsvpForm) return;
+    var attendance = rsvpForm.elements.attendance;
+    var tableNo = rsvpForm.elements.table_no;
+    var checkedIn = rsvpForm.elements.checked_in_at;
+    if (!attendance || attendance.getAttribute("data-decline-bound") === "1") return;
+    attendance.setAttribute("data-decline-bound", "1");
+    attendance.addEventListener("change", function () {
+      if (attendance.value !== "decline") return;
+      if (tableNo) tableNo.value = "";
+      if (checkedIn) checkedIn.value = "";
+    });
   }
 
   function fillRsvpSelects() {
