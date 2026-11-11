@@ -35,12 +35,13 @@
   var rsvpModalError = null;
   var rsvpModalTitle = null;
   var latestRows = [];
-  var rsvpFilters = { year: "", dept: "", status: "", checkin: "", table: "" };
+  var rsvpFilters = { year: "", dept: "", status: "", checkin: "", table: "", attendance: "" };
   var rsvpFilterYear = null;
   var rsvpFilterDept = null;
   var rsvpFilterStatus = null;
   var rsvpFilterCheckin = null;
   var rsvpFilterTable = null;
+  var rsvpFilterAttendance = null;
   var rsvpFilterMeta = null;
   var rsvpScrollTop = null;
   var rsvpScrollMain = null;
@@ -180,6 +181,11 @@
       '<option value="no">미체크인</option>' +
       "</select></label>" +
       '<label><span>테이블</span><select id="rsvp-filter-table"><option value="">전체</option></select></label>' +
+      '<label><span>참석 여부</span><select id="rsvp-filter-attendance">' +
+      '<option value="">전체</option>' +
+      '<option value="attend">참석</option>' +
+      '<option value="decline">불참</option>' +
+      "</select></label>" +
       '<button type="button" id="rsvp-filter-reset" class="ghost">필터 초기화</button>' +
       "</div>" +
       '<p id="rsvp-filter-meta" class="form-note"></p>' +
@@ -233,6 +239,7 @@
     rsvpFilterStatus = document.getElementById("rsvp-filter-status");
     rsvpFilterCheckin = document.getElementById("rsvp-filter-checkin");
     rsvpFilterTable = document.getElementById("rsvp-filter-table");
+    rsvpFilterAttendance = document.getElementById("rsvp-filter-attendance");
     rsvpFilterMeta = document.getElementById("rsvp-filter-meta");
     rsvpScrollTop = document.getElementById("rsvp-scroll-top");
     rsvpScrollMain = document.getElementById("rsvp-scroll-main");
@@ -277,13 +284,18 @@
       rsvpFilters.table = rsvpFilterTable.value || "";
       paintRsvpTable();
     });
+    rsvpFilterAttendance.addEventListener("change", function () {
+      rsvpFilters.attendance = rsvpFilterAttendance.value || "";
+      paintRsvpTable();
+    });
     document.getElementById("rsvp-filter-reset").addEventListener("click", function () {
-      rsvpFilters = { year: "", dept: "", status: "", checkin: "", table: "" };
+      rsvpFilters = { year: "", dept: "", status: "", checkin: "", table: "", attendance: "" };
       if (rsvpFilterYear) rsvpFilterYear.value = "";
       if (rsvpFilterDept) rsvpFilterDept.value = "";
       if (rsvpFilterStatus) rsvpFilterStatus.value = "";
       if (rsvpFilterCheckin) rsvpFilterCheckin.value = "";
       if (rsvpFilterTable) rsvpFilterTable.value = "";
+      if (rsvpFilterAttendance) rsvpFilterAttendance.value = "";
       paintRsvpTable();
     });
     renderCheckinQr();
@@ -565,10 +577,17 @@
     panelReady = false;
     saveStatus = saveError = contentFields = programEditor = rsvpBody = adminStats = null;
     rsvpModal = rsvpForm = rsvpModalError = rsvpModalTitle = null;
-    rsvpFilterYear = rsvpFilterDept = rsvpFilterStatus = rsvpFilterCheckin = rsvpFilterTable = rsvpFilterMeta = null;
+    rsvpFilterYear =
+      rsvpFilterDept =
+      rsvpFilterStatus =
+      rsvpFilterCheckin =
+      rsvpFilterTable =
+      rsvpFilterAttendance =
+      rsvpFilterMeta =
+        null;
     rsvpScrollTop = rsvpScrollMain = rsvpScrollSpacer = null;
     latestRows = [];
-    rsvpFilters = { year: "", dept: "", status: "", checkin: "", table: "" };
+    rsvpFilters = { year: "", dept: "", status: "", checkin: "", table: "", attendance: "" };
     loginPanel.hidden = false;
   }
 
@@ -784,6 +803,10 @@
     return String((row && row.table_no) || "").trim();
   }
 
+  function rowAttendanceKey(row) {
+    return attendanceKeyFromLabel((row && (row.attendance_key || row.attendance)) || "");
+  }
+
   function filteredRows() {
     return (latestRows || []).filter(function (row) {
       if (rsvpFilters.year) {
@@ -806,6 +829,7 @@
           return false;
         }
       }
+      if (rsvpFilters.attendance && rowAttendanceKey(row) !== rsvpFilters.attendance) return false;
       return true;
     });
   }
@@ -882,6 +906,7 @@
     if (rsvpFilterStatus) rsvpFilterStatus.value = rsvpFilters.status || "";
     if (rsvpFilterCheckin) rsvpFilterCheckin.value = rsvpFilters.checkin || "";
     if (rsvpFilterTable) rsvpFilterTable.value = rsvpFilters.table || "";
+    if (rsvpFilterAttendance) rsvpFilterAttendance.value = rsvpFilters.attendance || "";
   }
 
   function paintRsvpTable() {
@@ -895,7 +920,8 @@
         rsvpFilters.dept ||
         rsvpFilters.status ||
         rsvpFilters.checkin ||
-        rsvpFilters.table
+        rsvpFilters.table ||
+        rsvpFilters.attendance
           ? " · 필터 적용 중"
           : "";
       rsvpFilterMeta.textContent =
