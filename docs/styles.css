@@ -1107,6 +1107,17 @@ button:hover,
 
 .table-wrap { overflow-x: auto; }
 
+.table-scroll-top {
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 0 0 6px;
+}
+
+.table-scroll-spacer {
+  height: 1px;
+  pointer-events: none;
+}
+
 .admin-rsvp-filters {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
