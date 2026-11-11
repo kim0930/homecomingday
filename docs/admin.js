@@ -35,11 +35,12 @@
   var rsvpModalError = null;
   var rsvpModalTitle = null;
   var latestRows = [];
-  var rsvpFilters = { year: "", dept: "", status: "", checkin: "" };
+  var rsvpFilters = { year: "", dept: "", status: "", checkin: "", table: "" };
   var rsvpFilterYear = null;
   var rsvpFilterDept = null;
   var rsvpFilterStatus = null;
   var rsvpFilterCheckin = null;
+  var rsvpFilterTable = null;
   var rsvpFilterMeta = null;
   var rsvpScrollTop = null;
   var rsvpScrollMain = null;
@@ -178,6 +179,7 @@
       '<option value="yes">체크인 완료</option>' +
       '<option value="no">미체크인</option>' +
       "</select></label>" +
+      '<label><span>테이블</span><select id="rsvp-filter-table"><option value="">전체</option></select></label>' +
       '<button type="button" id="rsvp-filter-reset" class="ghost">필터 초기화</button>' +
       "</div>" +
       '<p id="rsvp-filter-meta" class="form-note"></p>' +
@@ -230,6 +232,7 @@
     rsvpFilterDept = document.getElementById("rsvp-filter-dept");
     rsvpFilterStatus = document.getElementById("rsvp-filter-status");
     rsvpFilterCheckin = document.getElementById("rsvp-filter-checkin");
+    rsvpFilterTable = document.getElementById("rsvp-filter-table");
     rsvpFilterMeta = document.getElementById("rsvp-filter-meta");
     rsvpScrollTop = document.getElementById("rsvp-scroll-top");
     rsvpScrollMain = document.getElementById("rsvp-scroll-main");
@@ -270,12 +273,17 @@
       rsvpFilters.checkin = rsvpFilterCheckin.value || "";
       paintRsvpTable();
     });
+    rsvpFilterTable.addEventListener("change", function () {
+      rsvpFilters.table = rsvpFilterTable.value || "";
+      paintRsvpTable();
+    });
     document.getElementById("rsvp-filter-reset").addEventListener("click", function () {
-      rsvpFilters = { year: "", dept: "", status: "", checkin: "" };
+      rsvpFilters = { year: "", dept: "", status: "", checkin: "", table: "" };
       if (rsvpFilterYear) rsvpFilterYear.value = "";
       if (rsvpFilterDept) rsvpFilterDept.value = "";
       if (rsvpFilterStatus) rsvpFilterStatus.value = "";
       if (rsvpFilterCheckin) rsvpFilterCheckin.value = "";
+      if (rsvpFilterTable) rsvpFilterTable.value = "";
       paintRsvpTable();
     });
     renderCheckinQr();
@@ -557,10 +565,10 @@
     panelReady = false;
     saveStatus = saveError = contentFields = programEditor = rsvpBody = adminStats = null;
     rsvpModal = rsvpForm = rsvpModalError = rsvpModalTitle = null;
-    rsvpFilterYear = rsvpFilterDept = rsvpFilterStatus = rsvpFilterCheckin = rsvpFilterMeta = null;
+    rsvpFilterYear = rsvpFilterDept = rsvpFilterStatus = rsvpFilterCheckin = rsvpFilterTable = rsvpFilterMeta = null;
     rsvpScrollTop = rsvpScrollMain = rsvpScrollSpacer = null;
     latestRows = [];
-    rsvpFilters = { year: "", dept: "", status: "", checkin: "" };
+    rsvpFilters = { year: "", dept: "", status: "", checkin: "", table: "" };
     loginPanel.hidden = false;
   }
 
@@ -772,6 +780,10 @@
     return !!(row && String(row.checked_in_at || "").trim());
   }
 
+  function rowTableNo(row) {
+    return String((row && row.table_no) || "").trim();
+  }
+
   function filteredRows() {
     return (latestRows || []).filter(function (row) {
       if (rsvpFilters.year) {
@@ -786,6 +798,14 @@
       if (rsvpFilters.status && rowStatusKey(row) !== rsvpFilters.status) return false;
       if (rsvpFilters.checkin === "yes" && !rowCheckedIn(row)) return false;
       if (rsvpFilters.checkin === "no" && rowCheckedIn(row)) return false;
+      if (rsvpFilters.table) {
+        var tableNo = rowTableNo(row);
+        if (rsvpFilters.table === "none") {
+          if (tableNo) return false;
+        } else if (tableNo !== rsvpFilters.table) {
+          return false;
+        }
+      }
       return true;
     });
   }
@@ -823,11 +843,45 @@
     }
   }
 
+  function refreshTableFilterOptions() {
+    if (!rsvpFilterTable) return;
+    var selected = rsvpFilters.table || "";
+    var tables = {};
+    var hasNone = false;
+    (latestRows || []).forEach(function (row) {
+      var tableNo = rowTableNo(row);
+      if (tableNo) tables[tableNo] = true;
+      else hasNone = true;
+    });
+    var codes = Object.keys(tables).sort(function (a, b) {
+      return (parseInt(a, 10) || 0) - (parseInt(b, 10) || 0);
+    });
+    rsvpFilterTable.innerHTML = '<option value="">전체</option>';
+    codes.forEach(function (tableNo) {
+      var opt = document.createElement("option");
+      opt.value = tableNo;
+      opt.textContent = tableNo + "번 테이블";
+      rsvpFilterTable.appendChild(opt);
+    });
+    if (hasNone) {
+      var none = document.createElement("option");
+      none.value = "none";
+      none.textContent = "테이블 미배정";
+      rsvpFilterTable.appendChild(none);
+    }
+    rsvpFilterTable.value = selected;
+    if (rsvpFilterTable.value !== selected) {
+      rsvpFilters.table = "";
+      rsvpFilterTable.value = "";
+    }
+  }
+
   function syncFilterControls() {
     if (rsvpFilterYear) rsvpFilterYear.value = rsvpFilters.year || "";
     if (rsvpFilterDept) rsvpFilterDept.value = rsvpFilters.dept || "";
     if (rsvpFilterStatus) rsvpFilterStatus.value = rsvpFilters.status || "";
     if (rsvpFilterCheckin) rsvpFilterCheckin.value = rsvpFilters.checkin || "";
+    if (rsvpFilterTable) rsvpFilterTable.value = rsvpFilters.table || "";
   }
 
   function paintRsvpTable() {
@@ -837,7 +891,11 @@
     rsvpBody.innerHTML = "";
     if (rsvpFilterMeta) {
       var active =
-        rsvpFilters.year || rsvpFilters.dept || rsvpFilters.status || rsvpFilters.checkin
+        rsvpFilters.year ||
+        rsvpFilters.dept ||
+        rsvpFilters.status ||
+        rsvpFilters.checkin ||
+        rsvpFilters.table
           ? " · 필터 적용 중"
           : "";
       rsvpFilterMeta.textContent =
@@ -905,6 +963,7 @@
   function renderRows(rows) {
     latestRows = rows || [];
     refreshYearFilterOptions();
+    refreshTableFilterOptions();
     paintRsvpTable();
   }
 
