@@ -71,204 +71,6 @@ var COL = {
   table_no: 15,
 };
 
-var SEATING_BY_NAME = {
-  "박범준": 1,
-  "성시우": 1,
-  "송주연": 1,
-  "오민혁": 1,
-  "오상근": 1,
-  "유현주": 1,
-  "이지원": 1,
-  "이채영": 1,
-  "최서연": 1,
-  "최현정": 1,
-  "김아현": 2,
-  "김영찬": 2,
-  "김웅기": 2,
-  "맹재영": 2,
-  "박신영": 2,
-  "박채혁": 2,
-  "손인혁": 2,
-  "윤지호": 2,
-  "이민우": 2,
-  "전진호": 2,
-  "권준혁": 3,
-  "김채련": 3,
-  "노영숙": 3,
-  "백종범": 3,
-  "솬뻿쏜": 3,
-  "이종현": 3,
-  "조민준": 3,
-  "조병성": 3,
-  "조영우": 3,
-  "주은채": 3,
-  "MYAT THIRI KHAING": 4,
-  "권태현": 4,
-  "김광덕": 4,
-  "김유리": 4,
-  "남준현": 4,
-  "박경희": 4,
-  "박종혁": 4,
-  "이상헌": 4,
-  "이승현": 4,
-  "이육현": 4,
-  "강건": 5,
-  "김요한": 5,
-  "김진현": 5,
-  "손영서": 5,
-  "이동준": 5,
-  "이두환": 5,
-  "이소은": 5,
-  "임종민": 5,
-  "장현승": 5,
-  "조아진": 5,
-  "김명진": 6,
-  "김용현": 6,
-  "박동현": 6,
-  "박민우": 6,
-  "우수인": 6,
-  "유정한": 6,
-  "이지윤": 6,
-  "이호현": 6,
-  "전윤재": 6,
-  "최국진": 6,
-  "강희준": 7,
-  "고강희": 7,
-  "구철회": 7,
-  "김선혜": 7,
-  "성준": 7,
-  "에찬 흘라잉": 7,
-  "우태훈": 7,
-  "윤지섭": 7,
-  "이건수": 7,
-  "황인하": 7,
-  "권순호": 8,
-  "김민준": 8,
-  "김병일": 8,
-  "김주은": 8,
-  "류선혜": 8,
-  "문서진": 8,
-  "서승훈": 8,
-  "원동국": 8,
-  "이경민": 8,
-  "이태준": 8,
-  "Wesam Hashim": 9,
-  "강성미": 9,
-  "김경순": 9,
-  "김재혁": 9,
-  "김태훈": 9,
-  "송대영": 9,
-  "이한세": 9,
-  "조유진": 9,
-  "한주호": 9,
-  "황선욱": 9,
-  "강수진": 10,
-  "김도현": 10,
-  "김현호": 10,
-  "박유빈": 10,
-  "위승환": 10,
-  "이나라": 10,
-  "이신학": 10,
-  "임상영": 10,
-  "조형석": 10,
-  "한상우": 10,
-  "강석영": 11,
-  "김동우": 11,
-  "박성현": 11,
-  "박종현": 11,
-  "박준현": 11,
-  "박효신": 11,
-  "박효준": 11,
-  "배상진": 11,
-  "송준기": 11,
-  "안시은": 11,
-  "김이한": 12,
-  "김태윤": 12,
-  "이찬민": 12,
-  "이현준": 12,
-  "정정길": 12,
-  "조은산": 12,
-  "최라희": 12,
-  "최우형": 12,
-  "홍영우": 12,
-  "황선호": 12,
-  "강나영": 13,
-  "김영우": 13,
-  "김화랑": 13,
-  "내튀": 13,
-  "박현수": 13,
-  "배강민": 13,
-  "백성현": 13,
-  "유창재": 13,
-  "이상민": 13,
-  "현지섭": 13,
-  "김샛별": 14,
-  "김태연": 14,
-  "김혜승": 14,
-  "박종준": 14,
-  "박준형": 14,
-  "성재은": 14,
-  "유민혁": 14,
-  "이도영": 14,
-  "장예승": 14,
-  "정재헌": 14,
-  "Thin Sandi Kyaw": 15,
-  "김은수": 15,
-  "박연재": 15,
-  "반홍준": 15,
-  "송성희": 15,
-  "송지해": 15,
-  "이수현": 15,
-  "임재영": 15,
-  "조희진": 15,
-  "최군주": 15,
-  "강희성": 16,
-  "박치헌": 16,
-  "성명제": 16,
-  "신재윤": 16,
-  "양재혁": 16,
-  "이수연": 16,
-  "이지희": 16,
-  "임민경": 16,
-  "추교진": 16,
-  "강유빈": 17,
-  "김동혁": 17,
-  "김민서": 17,
-  "박원희": 17,
-  "이재훈": 17,
-  "이해준": 17,
-  "임재원": 17,
-  "정연우": 17,
-  "차우진": 17,
-  "김지민": 18,
-  "박한나": 18,
-  "안슬기": 18,
-  "오동근": 18,
-  "유은서": 18,
-  "정문형": 18,
-  "정민우": 18,
-  "처유난다": 18,
-  "한희승": 18,
-  "고지우": 19,
-  "김건": 19,
-  "김준희": 19,
-  "유동민": 19,
-  "이성민": 19,
-  "이회호": 19,
-  "장세헌": 19,
-  "전승민": 19,
-  "차민승": 19,
-  "김수민": 20,
-  "김지헌": 20,
-  "김진형": 20,
-  "서형민": 20,
-  "성강비": 20,
-  "우지민": 20,
-  "운드람 에르대느": 20,
-  "유호준": 20,
-  "장우영": 20
-};
-
 var DEFAULT_CONTENT = {
   date: "2026년 11월 11일(수)",
   time: "18:00",
@@ -382,16 +184,6 @@ function doPost(e) {
       });
     }
 
-    if (action === "admin_apply_seating") {
-      if (!checkPassword_(data.password)) {
-        return json_({ ok: false, error: "비밀번호가 맞지 않습니다." });
-      }
-      var seating = applySeating_();
-      seating.stats = stats_();
-      seating.rows = listRsvps_();
-      return json_(seating);
-    }
-
     if (action === "admin_upsert_rsvp") {
       if (!checkPassword_(data.password)) {
         return json_({ ok: false, error: "비밀번호가 맞지 않습니다." });
@@ -472,26 +264,6 @@ function ensureRsvpHeaders_(sheet) {
   }
 }
 
-function normalizeName_(value) {
-  return String(value || "")
-    .split(/\r?\n/)[0]
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function lookupTableNo_(name) {
-  var key = normalizeName_(name);
-  if (!key) return "";
-  if (SEATING_BY_NAME[key] != null) return String(SEATING_BY_NAME[key]);
-  // 공백 차이 등 느슨한 매칭
-  var compact = key.replace(/\s+/g, "");
-  var names = Object.keys(SEATING_BY_NAME);
-  for (var i = 0; i < names.length; i++) {
-    if (names[i].replace(/\s+/g, "") === compact) return String(SEATING_BY_NAME[names[i]]);
-  }
-  return "";
-}
-
 function isDeclineRow_(rowValues) {
   var key = String(rowValues[COL.attendance_key] || "").trim();
   if (key === "decline") return true;
@@ -500,11 +272,9 @@ function isDeclineRow_(rowValues) {
 }
 
 function resolveTableNo_(rowValues) {
-  // 불참은 자리 배정 대상이 아닙니다.
+  // 불참은 자리 배정 대상이 아닙니다. 테이블은 시트 값만 사용합니다.
   if (isDeclineRow_(rowValues)) return "";
-  var existing = cellText_(rowValues[COL.table_no]);
-  if (existing) return existing;
-  return lookupTableNo_(rowValues[COL.name]);
+  return cellText_(rowValues[COL.table_no]);
 }
 
 function cellText_(value) {
@@ -695,7 +465,7 @@ function listRsvps_() {
           }
           return "";
         }
-        return cellText_(values[i][COL.table_no]) || lookupTableNo_(values[i][COL.name]);
+        return cellText_(values[i][COL.table_no]);
       })(),
     });
   }
@@ -775,8 +545,6 @@ function adminUpsertRsvp_(data) {
   }
   if (cleaned.attendance === "decline") {
     tableNo = "";
-  } else if (!tableNo) {
-    tableNo = lookupTableNo_(cleaned.name) || "";
   }
 
   var checkedIn = String(data.checked_in_at == null ? "" : data.checked_in_at).trim();
@@ -849,34 +617,6 @@ function adminDeleteRsvp_(phoneRaw) {
   return { ok: false, error: "삭제할 회신을 찾지 못했습니다." };
 }
 
-function applySeating_() {
-  var sheet = sheet_();
-  var values = sheet.getDataRange().getValues();
-  var updated = 0;
-  var missing = [];
-  for (var i = 1; i < values.length; i++) {
-    if (isDeclineRow_(values[i])) {
-      if (cellText_(values[i][COL.table_no])) {
-        sheet.getRange(i + 1, COL.table_no + 1).setValue("");
-        updated++;
-      }
-      continue;
-    }
-    var name = normalizeName_(values[i][COL.name]);
-    var tableNo = lookupTableNo_(name);
-    if (!tableNo) {
-      if (name) missing.push(name);
-      continue;
-    }
-    var current = cellText_(values[i][COL.table_no]);
-    if (current !== tableNo) {
-      sheet.getRange(i + 1, COL.table_no + 1).setValue(Number(tableNo) || tableNo);
-      updated++;
-    }
-  }
-  return { ok: true, updated: updated, missing: missing, total: values.length - 1 };
-}
-
 function checkin_(phoneRaw) {
   var phoneKey = normalizePhoneKey_(phoneRaw);
   if (!/^0\d{8,10}$/.test(phoneKey)) {
@@ -890,9 +630,6 @@ function checkin_(phoneRaw) {
     var affiliation = String(values[i][COL.affiliation] || "");
     var attendance = String(values[i][COL.attendance] || "");
     var tableNo = resolveTableNo_(values[i]);
-    if (tableNo && cellText_(values[i][COL.table_no]) !== tableNo) {
-      sheet.getRange(i + 1, COL.table_no + 1).setValue(Number(tableNo) || tableNo);
-    }
     var existing = cellText_(values[i][COL.checked_in_at]);
     if (existing) {
       return {
@@ -1184,9 +921,7 @@ function upsert_(row) {
   for (var i = 1; i < values.length; i++) {
     if (rowPhoneKey_(values[i]) === row.phone_key) {
       var checkedIn = decline ? "" : cellText_(values[i][COL.checked_in_at]);
-      var tableNo = decline
-        ? ""
-        : cellText_(values[i][COL.table_no]) || lookupTableNo_(row.name);
+      var tableNo = decline ? "" : cellText_(values[i][COL.table_no]);
       var line = [
         stamp,
         row.name,
@@ -1210,7 +945,6 @@ function upsert_(row) {
       return;
     }
   }
-  var newTable = decline ? "" : lookupTableNo_(row.name);
   sheet.appendRow([
     stamp,
     row.name,
@@ -1227,7 +961,7 @@ function upsert_(row) {
     row.phone_key,
     row.attendance,
     "",
-    newTable,
+    "",
   ]);
   row.updated = false;
 }

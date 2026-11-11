@@ -256,16 +256,11 @@ def create_app():
                 )
             already = bool(row["checked_in_at"])
             stamp = row["checked_in_at"] or now_kst()
-            table_no = (row["table_no"] or "").strip() or lookup_table_no(row["name"])
+            table_no = (row["table_no"] or "").strip()
             if not already:
                 conn.execute(
-                    "UPDATE rsvps SET checked_in_at = ?, table_no = CASE WHEN table_no = '' OR table_no IS NULL THEN ? ELSE table_no END WHERE id = ?",
-                    (stamp, table_no, row["id"]),
-                )
-            elif table_no and not (row["table_no"] or "").strip():
-                conn.execute(
-                    "UPDATE rsvps SET table_no = ? WHERE id = ?",
-                    (table_no, row["id"]),
+                    "UPDATE rsvps SET checked_in_at = ? WHERE id = ?",
+                    (stamp, row["id"]),
                 )
         return render_template(
             "checkin.html",
@@ -503,34 +498,6 @@ def save_rsvp(cleaned):
         return False
 
 
-def load_seating_map():
-    path = BASE_DIR / "docs" / "sheets-api" / "seating.json"
-    if not path.exists():
-        return {}
-    try:
-        import json
-
-        return json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        return {}
-
-
-SEATING_BY_NAME = load_seating_map()
-
-
-def lookup_table_no(name):
-    key = " ".join(str(name or "").splitlines()[0].split())
-    if not key:
-        return ""
-    if key in SEATING_BY_NAME:
-        return str(SEATING_BY_NAME[key])
-    compact = key.replace(" ", "")
-    for seat_name, table in SEATING_BY_NAME.items():
-        if seat_name.replace(" ", "") == compact:
-            return str(table)
-    return ""
-
-
 def list_rsvps():
     with connect() as conn:
         rows = conn.execute(
@@ -540,8 +507,8 @@ def list_rsvps():
     for row in rows:
         item = dict(row)
         item["phone_display"] = format_phone(item["phone"])
-        if not (item.get("table_no") or "").strip():
-            item["table_no"] = lookup_table_no(item.get("name"))
+        if item.get("attendance") == "decline":
+            item["table_no"] = ""
         result.append(item)
     return result
 
@@ -632,7 +599,7 @@ def attendance_stats():
         ).fetchall()
         checked_rows = conn.execute(
             """
-            SELECT detail, affiliation, name, table_no, checked_in_at
+            SELECT detail, affiliation, name, table_no, checked_in_at, attendance
             FROM rsvps
             """
         ).fetchall()
@@ -646,8 +613,8 @@ def attendance_stats():
     table_assigned = {}
     table_checked = {}
     checked_in = 0
-    for detail, affiliation, name, table_no, checked_at in checked_rows:
-        table = (table_no or "").strip() or lookup_table_no(name)
+    for detail, affiliation, name, table_no, checked_at, attendance in checked_rows:
+        table = "" if attendance == "decline" else (table_no or "").strip()
         is_checked = bool(checked_at)
         if table:
             table_assigned[table] = table_assigned.get(table, 0) + 1
